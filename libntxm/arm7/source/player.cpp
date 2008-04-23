@@ -255,10 +255,10 @@ void Player::playTimerHandler(void)
 	}
 	
 	// Update tick ms
-	state.tick_ms += passed_time;
+	state.tick_ms += passed_time << 16;
 	
 	// Check if we are shortly before the next tick. (As long as a fade would take)
-	if(state.tick_ms >= song->getMsPerTick() - FADE_OUT_MS)
+	if(state.tick_ms >= song->getMsPerTick() - (FADE_OUT_MS << 16))
 	{
 		// Is there a request to set the volume?
 		for(u8 channel=0; channel<song->n_channels && channel<MAX_CHANNELS; ++channel)
