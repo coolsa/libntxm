@@ -1027,6 +1027,13 @@ u16 XMTransport::save(const char *filename, Song *song)
 				
 				sample = instrument->getSample(smp);
 				
+				bool empty_sample = false;
+				if(sample == NULL)
+				{
+					sample = new Sample(NULL, 0);
+					empty_sample = true;
+				}
+					
 				// Sample length
 				u32 smp_length = sample->getSize();
 				my_fwrite_buffered(&smp_length, 4, 1, xmfile);
@@ -1079,6 +1086,9 @@ u16 XMTransport::save(const char *filename, Song *song)
 				my_fwrite_buffered(sample_name, 1, 22, xmfile);
 				
 				//iprintf("sample saved\n");
+				
+				if(empty_sample == true)
+					free(sample);
 			}
 			
 			// Write sample data
