@@ -49,7 +49,7 @@ typedef struct
 	bool songloop;						// Whether the song is played in a loop
 	bool playing;						// D'uh!
 	bool juststarted;					// If we just started playing
-	u32 tick_ms;						// ms spent in the current tick
+	u32 tick_ms;						// ms spent in the current tick (16.16 fixed point)
 	u8 row_ticks;						// Ticks that passed in the current row
 	u8 channel_active[MAX_CHANNELS];			// 0 for inactive, 1 for active, 2 for deactivation scheduled
 	u16 channel_ms_left[MAX_CHANNELS];			// how many milliseconds still to play?

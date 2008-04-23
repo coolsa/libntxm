@@ -138,12 +138,14 @@ u16 Song::getPatternLength(u8 idx)
 
 // How many milliseconds per row
 u32 Song::getMsPerRow(void) {
-	return speed*5*1000/2/bpm; // Formula from Fasttracker II
+	// Formula from Fasttracker II: speed*5*1000/2/bpm
+	return (unsigned long)( ( ( ((unsigned long long)(speed) << 16) * ((unsigned long long)(2500) << 16)) ) / (bpm<<16) );
 }
 
 // How many milliseconds per tick (1 tick = time for 1 row / speed)
 u32 Song::getMsPerTick(void) {
-	return 5*1000/2/bpm; // Formula from Fasttracker II
+	// Formula from Fasttracker II: 5*1000/2/bpm
+	return (unsigned long)( (((unsigned long long)(2500)) << 32) / (bpm<<16) );
 }
 
 Instrument *Song::getInstrument(u8 instidx) {
