@@ -280,13 +280,23 @@ s8 Sample::getFinetune(void) {
 	return finetune;
 }
 
-u32 Sample::getSize(void) {
-	return size;
+u32 Sample::getSize(void)
+{
+	if(loop == PING_PONG_LOOP)
+	{
+		if(is_16_bit) {
+			return original_n_samples * 2;
+		} else {
+			return original_n_samples;
+		}
+	} else {
+		return size;
+	}
 }
 
 u32 Sample::getNSamples(void)
 {
-	if(pingpong_data != 0)
+	if(loop == PING_PONG_LOOP)
 		return original_n_samples;
 	else
 		return n_samples;
@@ -295,7 +305,7 @@ u32 Sample::getNSamples(void)
 void *Sample::getData(void)
 {
 	// sound_data is modified for the loop, but original_data points to the unmodified sound data
-	if(pingpong_data != 0)
+	if(loop == PING_PONG_LOOP)
 		return original_data;
 	else
 		return sound_data;

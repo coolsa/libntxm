@@ -117,57 +117,6 @@ char *my_strncpy(char *dest, const char *src, u32 n)
 
 #ifdef ARM9
 
-u32 my_fwrite_buffered(const void* buffer, u32 size, u32 count, FILE* file)
-{
-	u32 buffer_rest = WRITEBUFFER_SIZE - writebuffer_pos;
-	u32 bytes = size * count;
-	
-	if(bytes < buffer_rest) {
-		
-		memcpy(writebuffer+writebuffer_pos, buffer, bytes);
-		writebuffer_pos += bytes;
-		
-	} else {
-		
-		memcpy(writebuffer+writebuffer_pos, buffer, buffer_rest);
-		buffer = (u8*)buffer + buffer_rest;
-		
-		// Flush
-		fwrite(writebuffer, WRITEBUFFER_SIZE, 1, file);
-		writebuffer_pos = 0;
-		
-		bytes -= buffer_rest;
-		buffer_rest = WRITEBUFFER_SIZE;
-		
-		while(bytes >= WRITEBUFFER_SIZE) {
-			
-			memcpy(writebuffer, buffer, WRITEBUFFER_SIZE);
-			buffer = (u8*)buffer + WRITEBUFFER_SIZE;
-			bytes -= WRITEBUFFER_SIZE;
-			
-			// Flush
-			fwrite(writebuffer, WRITEBUFFER_SIZE, 1, file);
-			writebuffer_pos = 0;
-			
-		}
-		
-		memcpy(writebuffer, buffer, bytes);
-		writebuffer_pos += bytes;
-		
-	}
-	
-	return size*count;
-}
-
-
-bool my_fclose_buffered(FILE* file)
-{
-	fwrite(writebuffer, writebuffer_pos, 1, file);
-	writebuffer_pos = 0;
-	
-	return fclose(file);
-}
-
 bool my_file_exists(const char *filename)
 {
 	bool res;
