@@ -662,67 +662,67 @@ u16 XMTransport::save(const char *filename, Song *song)
 	
 	// Magic number
 	char magicnumber[18] = "Extended Module: ";
-	my_fwrite_buffered(magicnumber, 1, 17, xmfile);
+	fwrite(magicnumber, 1, 17, xmfile);
 	
 	// Song name
 	char songname[21] = {0};
 	strcpy(songname, song->getName());
-	my_fwrite_buffered(songname, 1, 20, xmfile);
+	fwrite(songname, 1, 20, xmfile);
 	
 	// wtf
 	u8 versionbyte = 0x1a;
-	my_fwrite_buffered(&versionbyte, 1, 1, xmfile);
+	fwrite(&versionbyte, 1, 1, xmfile);
 
 	// Tracker Name
 	char trackername[21] = "NitroTracker";
-	my_fwrite_buffered(trackername, 1, 20, xmfile);
+	fwrite(trackername, 1, 20, xmfile);
 
 	// Version number
 	u16 version = 0x104; // FT2 version number (else soundtracker won't accept the file
-	my_fwrite_buffered(&version, 2, 1, xmfile);
+	fwrite(&version, 2, 1, xmfile);
 
 	// Header size
 	u32 headersize = 0x114;
-	my_fwrite_buffered(&headersize, 4, 1, xmfile);
+	fwrite(&headersize, 4, 1, xmfile);
 
 	// Song Length
 	u16 songlength = song->getPotLength();
-	my_fwrite_buffered(&songlength, 2, 1, xmfile);
+	fwrite(&songlength, 2, 1, xmfile);
 
 	// Restart position
 	u16 restartpos = song->getRestartPosition();
-	my_fwrite_buffered(&restartpos, 2, 1, xmfile);
+	fwrite(&restartpos, 2, 1, xmfile);
 
 	// Number of channels
 	u16 n_channels = song->getChannels();
-	my_fwrite_buffered(&n_channels, 2, 1, xmfile);
+	fwrite(&n_channels, 2, 1, xmfile);
 
 	// Number of patterns
 	u16 n_patterns = song->getNumPatterns();
-	my_fwrite_buffered(&n_patterns, 2, 1, xmfile);
+	fwrite(&n_patterns, 2, 1, xmfile);
 
 	// Number of instruments
 	u16 n_inst = song->getInstruments();
-	my_fwrite_buffered(&n_inst, 2, 1, xmfile);
+	fwrite(&n_inst, 2, 1, xmfile);
 	
 	// Flags
 	u16 flags = 1; // Means linear freq table (amiga table support maybe soon)
-	my_fwrite_buffered(&flags, 2, 1, xmfile);
+	fwrite(&flags, 2, 1, xmfile);
 	
 	// Tempo
 	u16 tempo = song->getTempo();
-	my_fwrite_buffered(&tempo, 2, 1, xmfile);
+	fwrite(&tempo, 2, 1, xmfile);
 	
 	// BPM
 	u16 bpm = song->getBPM();
-	my_fwrite_buffered(&bpm, 2, 1, xmfile);
+	fwrite(&bpm, 2, 1, xmfile);
 	
 	// POT
 	u8 pot[256] = {0};
 	for(u8 i=0; i<song->getPotLength(); ++i) {
 		pot[i] = song->getPotEntry(i);
 	}
-	my_fwrite_buffered(pot, 1, 256, xmfile);
+	fwrite(pot, 1, 256, xmfile);
 	
 	//
 	// Write patterns
@@ -736,15 +736,15 @@ u16 XMTransport::save(const char *filename, Song *song)
 		
 		// Pattern header length
 		u32 ptnheaderlength = 9;
-		my_fwrite_buffered(&ptnheaderlength, 4, 1, xmfile);
+		fwrite(&ptnheaderlength, 4, 1, xmfile);
 		
 		// Packing type
 		u8 packtype = 0; // Is always 0
-		my_fwrite_buffered(&packtype, 1, 1, xmfile);
+		fwrite(&packtype, 1, 1, xmfile);
 		
 		// Number of rows
 		u16 n_rows = song->getPatternLength(ptn);
-		my_fwrite_buffered(&n_rows, 2, 1, xmfile);
+		fwrite(&n_rows, 2, 1, xmfile);
 		
 		if(n_rows > 256) {
 			iprintf("%u rows!\n",n_rows);
@@ -882,10 +882,10 @@ u16 XMTransport::save(const char *filename, Song *song)
 		// Packed patterndata size
 		u16 packed_ptn_size = datapos+1;
 		//iprintf("saving packed size\n");
-		my_fwrite_buffered(&packed_ptn_size, 2, 1, xmfile);
+		fwrite(&packed_ptn_size, 2, 1, xmfile);
 		// Packed patterndata
 		iprintf("saving ptn (%u bytes) %p\n",packed_ptn_size,patterndata);
-		my_fwrite_buffered(patterndata, 1, packed_ptn_size, xmfile);
+		fwrite(patterndata, 1, packed_ptn_size, xmfile);
 
 		my_free(patterndata);
 	}
@@ -913,22 +913,20 @@ u16 XMTransport::save(const char *filename, Song *song)
 		
 		// Instrument size (always 0x107)
 		u32 inst_size = 0x107;
-		my_fwrite_buffered(&inst_size, 4, 1, xmfile);
-		
-		//iprintf("name\n");
+		fwrite(&inst_size, 4, 1, xmfile);
 		
 		// Instrument name
 		char inst_name[33] = {0};
 		strcpy(inst_name, instrument->getName());
-		my_fwrite_buffered(inst_name, 1, 22, xmfile);
+		fwrite(inst_name, 1, 22, xmfile);
 		
 		// Instrument type (always 0)
 		u8 inst_type = 0;
-		my_fwrite_buffered(&inst_type, 1, 1, xmfile);
+		fwrite(&inst_type, 1, 1, xmfile);
 		
 		// Number of samples in instrument
 		u16 inst_n_samples = instrument->getSamples();
-		my_fwrite_buffered(&inst_n_samples, 2, 1, xmfile);
+		fwrite(&inst_n_samples, 2, 1, xmfile);
 		
 		iprintf("n samples: %u\n", inst_n_samples);
 		
@@ -988,26 +986,26 @@ u16 XMTransport::save(const char *filename, Song *song)
 			
 			// Vibrato stuff and fadeout are skipped for now
 			
-			my_fwrite_buffered( &instinfo->sample_header_size, 4, 1, xmfile);
-			my_fwrite_buffered( &instinfo->note_samples, 96, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_points, 48, 1, xmfile);
-			my_fwrite_buffered( &instinfo->pan_points, 48, 1, xmfile);
-			my_fwrite_buffered( &instinfo->n_vol_points, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->n_pan_points, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_sustain_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_loop_start_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_loop_end_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->pan_sustain_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->pan_loop_start_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->pan_loop_end_point, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_type, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->pan_type, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vibrato_type, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vibrato_sweep, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vibrato_depth, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vibrato_rate, 1, 1, xmfile);
-			my_fwrite_buffered( &instinfo->vol_fadeout, 2, 1, xmfile);
-			my_fwrite_buffered( &instinfo->reserved_bytes, 11, 1, xmfile);
+			fwrite( &instinfo->sample_header_size, 4, 1, xmfile);
+			fwrite( &instinfo->note_samples, 96, 1, xmfile);
+			fwrite( &instinfo->vol_points, 48, 1, xmfile);
+			fwrite( &instinfo->pan_points, 48, 1, xmfile);
+			fwrite( &instinfo->n_vol_points, 1, 1, xmfile);
+			fwrite( &instinfo->n_pan_points, 1, 1, xmfile);
+			fwrite( &instinfo->vol_sustain_point, 1, 1, xmfile);
+			fwrite( &instinfo->vol_loop_start_point, 1, 1, xmfile);
+			fwrite( &instinfo->vol_loop_end_point, 1, 1, xmfile);
+			fwrite( &instinfo->pan_sustain_point, 1, 1, xmfile);
+			fwrite( &instinfo->pan_loop_start_point, 1, 1, xmfile);
+			fwrite( &instinfo->pan_loop_end_point, 1, 1, xmfile);
+			fwrite( &instinfo->vol_type, 1, 1, xmfile);
+			fwrite( &instinfo->pan_type, 1, 1, xmfile);
+			fwrite( &instinfo->vibrato_type, 1, 1, xmfile);
+			fwrite( &instinfo->vibrato_sweep, 1, 1, xmfile);
+			fwrite( &instinfo->vibrato_depth, 1, 1, xmfile);
+			fwrite( &instinfo->vibrato_rate, 1, 1, xmfile);
+			fwrite( &instinfo->vol_fadeout, 2, 1, xmfile);
+			fwrite( &instinfo->reserved_bytes, 11, 1, xmfile);
 			
 			free(instinfo);
 			
@@ -1016,15 +1014,13 @@ u16 XMTransport::save(const char *filename, Song *song)
 			// Fill up to header size = 0x107 = 263. We have written 252 bytes up will now.
 			u8* moreemptydata = (u8*)my_malloc(inst_size - 252);
 			memset(moreemptydata, 0, inst_size - 252);
-			my_fwrite_buffered(moreemptydata, 1, inst_size - 252, xmfile);
+			fwrite(moreemptydata, 1, inst_size - 252, xmfile);
 			my_free(moreemptydata);
 			
 			// Write sample headers
 			
-			for(u8 smp=0; smp<inst_n_samples; ++smp) {
-				
-				//iprintf("writing sample header %u\n", smp);
-				
+			for(u8 smp=0; smp<inst_n_samples; ++smp)
+			{
 				sample = instrument->getSample(smp);
 				
 				bool empty_sample = false;
@@ -1036,10 +1032,9 @@ u16 XMTransport::save(const char *filename, Song *song)
 					
 				// Sample length
 				u32 smp_length = sample->getSize();
-				my_fwrite_buffered(&smp_length, 4, 1, xmfile);
-				
-				// TODO: Loop stuff
-				
+				fwrite(&smp_length, 4, 1, xmfile);
+
+				// Loop stuff
 				u32 smp_loop_start = sample->getLoopStart();
 				u32 smp_loop_length = sample->getLoopLength();
 				
@@ -1049,16 +1044,16 @@ u16 XMTransport::save(const char *filename, Song *song)
 					smp_loop_length *= 2;
 				}
 				
-				my_fwrite_buffered(&smp_loop_start, 4, 1, xmfile);
-				my_fwrite_buffered(&smp_loop_length, 4, 1, xmfile);
+				fwrite(&smp_loop_start, 4, 1, xmfile);
+				fwrite(&smp_loop_length, 4, 1, xmfile);
 				
-				//TODO: Sample Volume
+				// Sample Volume
 				u8 smp_vol = (sample->getVolume() + 1) / 4; // Convert scale to 0-64
-				my_fwrite_buffered(&smp_vol, 1, 1, xmfile);
+				fwrite(&smp_vol, 1, 1, xmfile);
 				
 				// Finetune
 				s8 smp_finetune = sample->getFinetune();
-				my_fwrite_buffered(&smp_finetune, 1, 1, xmfile);
+				fwrite(&smp_finetune, 1, 1, xmfile);
 				
 				// Type
 				u8 smp_type = 0;
@@ -1066,26 +1061,24 @@ u16 XMTransport::save(const char *filename, Song *song)
 				if(sample->is16bit()) {
 					smp_type |= 1<<4;
 				}
-				my_fwrite_buffered(&smp_type, 1, 1, xmfile);
+				fwrite(&smp_type, 1, 1, xmfile);
 				
-				//TODO: Panning
+				// Panning
 				u8 smp_panning = 128;
-				my_fwrite_buffered(&smp_panning, 1, 1, xmfile);
+				fwrite(&smp_panning, 1, 1, xmfile);
 				
 				// Relative note
 				s8 smp_relnote = sample->getRelNote();
-				my_fwrite_buffered(&smp_relnote, 1, 1, xmfile);
+				fwrite(&smp_relnote, 1, 1, xmfile);
 				
 				// Reserved byte (what a crappy standard)
 				u8 smp_funky_reserved_byte = 0x80;
-				my_fwrite_buffered(&smp_funky_reserved_byte, 1, 1, xmfile);
+				fwrite(&smp_funky_reserved_byte, 1, 1, xmfile);
 				
-				//TODO:Sample name
+				// Sample name
 				char sample_name[23] = "                      ";
 				strncpy(sample_name, sample->getName(), strlen(sample->getName())); // Don't copy \0 character
-				my_fwrite_buffered(sample_name, 1, 22, xmfile);
-				
-				//iprintf("sample saved\n");
+				fwrite(sample_name, 1, 22, xmfile);
 				
 				if(empty_sample == true)
 					free(sample);
@@ -1093,10 +1086,8 @@ u16 XMTransport::save(const char *filename, Song *song)
 			
 			// Write sample data
 			
-			for(u8 smp=0; smp<inst_n_samples; ++smp) {
-				
-				//iprintf("writing sample data %u\n",smp);
-				
+			for(u8 smp=0; smp<inst_n_samples; ++smp)
+			{
 				sample = instrument->getSample(smp);
 				
 				bool empty_sample = false;
@@ -1106,29 +1097,30 @@ u16 XMTransport::save(const char *filename, Song *song)
 					sample = new Sample(NULL, 0);
 				}
 					
-				if(sample->is16bit()) {
-					
+				if(sample->is16bit())
+				{
 					s16 *sample_data = (s16*)sample->getData();
 					s16 *sample_data_enc = (s16*)my_malloc( sample->getSize() );
 					
-					if(sample_data_enc != 0) {
-						
+					if(sample_data_enc != 0)
+					{
 						s16 last = 0;
-						for(u32 i=0; i<sample->getNSamples(); ++i) {
+						for(u32 i=0; i<sample->getNSamples(); ++i)
+						{
 							sample_data_enc[i] = sample_data[i] - last;
 							last = sample_data[i];
 						}
-						my_fwrite_buffered(sample_data_enc, 1, sample->getSize(), xmfile);
+						fwrite(sample_data_enc, 1, sample->getSize(), xmfile);
 					
 						my_free(sample_data_enc);
 						
-					} else { // slow uncached fallback
+					} else { // slow uncached fallback if ram is nearly full
 						
 						iprintf("saving with slow uncached fallback\n");
 						s16 last = 0, curr;
 						for(u32 i=0; i<sample->getNSamples(); ++i) {
 							curr = sample_data[i] - last;
-							my_fwrite_buffered(&curr, 1, 2, xmfile);
+							fwrite(&curr, 1, 2, xmfile);
 							last = sample_data[i];
 						}
 						iprintf("done\n");
@@ -1139,25 +1131,27 @@ u16 XMTransport::save(const char *filename, Song *song)
 					s8 *sample_data = (s8*)sample->getData();
 					s8 *sample_data_enc = (s8*)malloc( sample->getSize() );
 					
-					if(sample_data_enc != 0) {
-						
+					if(sample_data_enc != 0)
+					{
 						s8 last = 0;
-						for(u32 i=0; i<sample->getNSamples(); ++i) {
+						for(u32 i=0; i<sample->getNSamples(); ++i)
+						{
 							sample_data_enc[i] = sample_data[i] - last;
 							last = sample_data[i];
 						}
 						
-						my_fwrite_buffered(sample_data_enc, 1, sample->getSize(), xmfile);
+						fwrite(sample_data_enc, 1, sample->getSize(), xmfile);
 						
 						free(sample_data_enc);
-						
-					} else {
-						
+					}
+					else
+					{
 						iprintf("saving with slow uncached fallback\n");
 						s8 last = 0, curr;
-						for(u32 i=0; i<sample->getNSamples(); ++i) {
+						for(u32 i=0; i<sample->getNSamples(); ++i)
+						{
 							curr = sample_data[i] - last;
-							my_fwrite_buffered(&curr, 1, 2, xmfile);
+							fwrite(&curr, 1, 2, xmfile);
 							last = sample_data[i];
 						}
 						iprintf("done\n");
@@ -1169,12 +1163,13 @@ u16 XMTransport::save(const char *filename, Song *song)
 					free(sample);
 				
 			}
-			
-		} else {
+		}
+		else
+		{
 			// fill up the instrument header with 0es
 			u8 *zeroes = (u8*)my_memalign(2, inst_size - 29);
 			memset(zeroes, 0, inst_size - 29);
-			my_fwrite_buffered(zeroes, inst_size - 29, 1, xmfile);
+			fwrite(zeroes, inst_size - 29, 1, xmfile);
 			my_free(zeroes);
 		}
 		
@@ -1182,14 +1177,12 @@ u16 XMTransport::save(const char *filename, Song *song)
 			delete instrument;
 		}
 		
-		//iprintf("inst saved\n");
-		
 	}
 	
 	//
 	// Finish up
 	//
-	my_fclose_buffered(xmfile);
+	fclose(xmfile);
 	
 	iprintf("song saved as :\"%s\"\n", filename);
 	

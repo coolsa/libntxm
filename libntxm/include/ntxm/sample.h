@@ -67,8 +67,8 @@ class Sample
 		u8 getRelNote(void);
 		s8 getFinetune(void);
 		
-		u32 getSize(void);
-		u32 getNSamples(void);
+		u32 getSize(void); // Get the size in bytes
+		u32 getNSamples(void); // Get the numer of (PCM) samples
 		
 		void *getData(void);
 		
