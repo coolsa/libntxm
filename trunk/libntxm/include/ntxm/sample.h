@@ -80,6 +80,8 @@ class Sample
 		u32 getLoopLength(void);
 		void setLoopStart(u32 _loop_start);
 		u32 getLoopStart(void);
+		
+		// Sets loop start and length, arguments are given in samples
 		void setLoopStartAndLength(u32 _loop_start, u32 _loop_length);
 		
 		void setVolume(u8 vol);

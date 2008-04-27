@@ -322,9 +322,6 @@ bool Sample::setLoop(u8 loop_) // Set loop type. Can fail due to memory constrai
 	if(loop_ == loop)
 		return true;
 	
-	if(loop == NO_LOOP) // If no loop is set, set the loop points to start and end of sample
-		setLoopStartAndLength(0, n_samples);
-	
 	if(loop == PING_PONG_LOOP) // Switching from ping-pong to sth else
 	{
 		removePingPongLoop();
@@ -447,6 +444,13 @@ void Sample::delPart(u32 startsample, u32 endsample)
 	if(endsample >= n_samples)
 		endsample = n_samples-1;
 	
+	bool restore_ping_pong = false;
+	if(loop == PING_PONG_LOOP)
+	{
+		setLoop(NO_LOOP);
+		restore_ping_pong = true;
+	}
+		
 	// Special case: everything is deleted
 	if((startsample==0)&&(endsample==n_samples))
 	{
@@ -477,12 +481,12 @@ void Sample::delPart(u32 startsample, u32 endsample)
 	// Now everything's clear and we set the variables right
 	calcSize();
 	
+	// Update Loop
 	u32 loop_end = loop_start + loop_length;
-	u32 start = startsample * (is_16_bit?2:1);
-	u32 end = endsample * (is_16_bit?2:1);
+	u32 start = startsample * bps;
+	u32 end = endsample * bps;
 	u32 del = end - start;
 	
-	// Update Loop
 	if(loop != NO_LOOP)
 	{
 		if(start < loop_end)
@@ -533,8 +537,10 @@ void Sample::delPart(u32 startsample, u32 endsample)
 		loop_length = size;
 	}
 	
-	if(loop == PING_PONG_LOOP)
-		updatePingPongLoop();
+	iprintf("%d %d %d\n", loop_start, loop_length, size);
+	
+	if(restore_ping_pong)
+		setLoop(PING_PONG_LOOP);
 }
 
 void Sample::fadeIn(u32 startsample, u32 endsample)
@@ -822,12 +828,12 @@ void Sample::setupPingPongLoop(void)
 	original_n_samples = n_samples;
 	
 	u32 original_size = size;
-	
+	iprintf("%d\n",__LINE__);
 	pingpong_data = realloc(pingpong_data, original_size + loop_length);
-	
+	iprintf("%d\n",__LINE__);
 	// Copy sound data until loop end
 	memcpy(pingpong_data, original_data, loop_start + loop_length);
-	
+	iprintf("%d\n",__LINE__);
 	// Copy reverse loop
 	if(is_16_bit)
 	{
@@ -847,21 +853,22 @@ void Sample::setupPingPongLoop(void)
 		for(u32 i=0; i<loop_length; ++i)
 			pp[pos+i] = orig[pos-i];
 	}
-	
+	iprintf("%d\n",__LINE__);
 	// Copy rest
 	u32 pos = loop_start + loop_length;
+	iprintf("%d %d %d %d\n", loop_start, loop_length, original_size, pos);
 	memcpy((u8*)pingpong_data+ pos + loop_length, (u8*)original_data + pos, original_size - pos);
-	
+	iprintf("%d\n",__LINE__);
 	// Set as new sound data
 	sound_data = pingpong_data;
-	
+	iprintf("%d\n",__LINE__);
 	if(is_16_bit)
 		n_samples = (original_size + loop_length) / 2;
 	else
 		n_samples = original_size + loop_length;
-	
+	iprintf("%d\n",__LINE__);
 	calcSize();
-	
+	iprintf("%d\n",__LINE__);
 	DC_FlushAll();
 }
 

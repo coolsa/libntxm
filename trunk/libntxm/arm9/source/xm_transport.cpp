@@ -70,27 +70,41 @@ u16 XMTransport::load(const char *filename, Song **_song)
 	
 	FILE *xmfile = fopen(filename, "r");
 	
-	if((s32)xmfile == -1)
-		return XM_TRANSPORT_ERROR_FOPENFAIL;
+	fseek(xmfile, 0, SEEK_END);
+	u32 filesize = ftell(xmfile);
+	fseek(xmfile, 0, SEEK_SET);
 	
 	// Check if the song fits into RAM
+	/// stat appears to be broken, TODO: fix
+	/*
+	u32 filesize = 0;
 	struct stat fstats;
-	stat(filename, &fstats);
-	u32 filesize = fstats.st_size;
-	
-	u32 ram_free = my_get_free_mem();
-	if(filesize > ram_free)
+	if(stat(fd, &fstats) == 0)
 	{
-		fclose(xmfile);
-		iprintf("file too big for ram\n");
+		filesize = fstats.st_size;
+	}
+	else
+	{
+		iprintf("stat failed!");
 		return XM_TRANSPORT_FILE_TOO_BIG_FOR_RAM;
 	}
-	
-	if(filesize == 0) {
-		fclose(xmfile);
+	*/
+	if(filesize == 0)
+	{
 		iprintf("0-byte file!\n");
 		return XM_TRANSPORT_FILE_ZERO_BYTE;
 	}
+	
+	u32 ram_free = my_get_free_mem();
+	iprintf("%d %d\n",filesize, my_get_free_mem() );
+	if(filesize > ram_free)
+	{
+		iprintf("file too big for ram\n");
+		return XM_TRANSPORT_FILE_TOO_BIG_FOR_RAM;
+	}
+
+	if((s32)xmfile == -1)
+		return XM_TRANSPORT_ERROR_FOPENFAIL;
 	
 	//
 	// Read header
@@ -492,12 +506,12 @@ u16 XMTransport::load(const char *filename, Song **_song)
 				// Sample loop start
 				u32 sample_loop_start;
 				sample_loop_start = *(u32*)(sample_headers+40*sample_id + 4);
-				//iprintf("sample loop start: %u\n", sample_loop_start);
+				iprintf("sample loop start: %u\n", sample_loop_start);
 				
 				// Sample loop length
 				u32 sample_loop_length;
 				sample_loop_length = *(u32*)(sample_headers+40*sample_id + 8);
-				//iprintf("sample loop length: %u\n", sample_loop_start);
+				iprintf("sample loop length: %u\n", sample_loop_length);
 				
 				// Volume (0-64)
 				u8 sample_volume;
@@ -520,6 +534,8 @@ u16 XMTransport::load(const char *filename, Song **_song)
 				sample_type = *(u8*)(sample_headers+40*sample_id + 14);
 				
 				u8 loop_type = sample_type & 3;
+				if(sample_loop_length == 0)
+					loop_type = NO_LOOP;
 				
 				bool sample_is_16_bit = sample_type & 0x10;
 				if(sample_is_16_bit)
@@ -602,8 +618,8 @@ u16 XMTransport::load(const char *filename, Song **_song)
 				sample->setRelNote(sample_rel_note);
 				sample->setFinetune(sample_finetune);
 				
-				sample->setLoopStartAndLength(sample_loop_start, sample_loop_length);
 				sample->setLoop(loop_type);
+				sample->setLoopStartAndLength(sample_loop_start, sample_loop_length);
 				sample->setName(sample_name);
 				instrument->addSample(sample);
 				
@@ -1054,6 +1070,7 @@ u16 XMTransport::save(const char *filename, Song *song)
 				
 				fwrite(&smp_loop_start, 4, 1, xmfile);
 				fwrite(&smp_loop_length, 4, 1, xmfile);
+				iprintf("loopstart: %d looplength: %d\n", smp_loop_start, smp_loop_length);
 				
 				// Sample Volume
 				u8 smp_vol = (sample->getVolume() + 1) / 4; // Convert scale to 0-64

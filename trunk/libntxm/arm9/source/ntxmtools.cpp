@@ -202,6 +202,7 @@ u32 my_getFreeDiskSpace(void)
 	struct statvfs fiData;
 
 	if((statvfs("/",&fiData)) < 0 ) {
+		iprintf("stat failed!\n");
 		return 0;
 	} else {
 		return fiData.f_bsize*fiData.f_bfree;
