@@ -68,11 +68,7 @@ u16 XMTransport::load(const char *filename, Song **_song)
 	//
 	fatInitDefault();
 	
-	FILE *xmfile = fopen(filename, "r");
-	
-	fseek(xmfile, 0, SEEK_END);
-	u32 filesize = ftell(xmfile);
-	fseek(xmfile, 0, SEEK_SET);
+	u32 filesize = my_getFileSize(filename);
 	
 	// Check if the song fits into RAM
 	/// stat appears to be broken, TODO: fix
@@ -96,13 +92,13 @@ u16 XMTransport::load(const char *filename, Song **_song)
 	}
 	
 	u32 ram_free = my_get_free_mem();
-	iprintf("%d %d\n",filesize, my_get_free_mem() );
 	if(filesize > ram_free)
 	{
 		iprintf("file too big for ram\n");
 		return XM_TRANSPORT_FILE_TOO_BIG_FOR_RAM;
 	}
-
+	
+	FILE *xmfile = fopen(filename, "r");
 	if((s32)xmfile == -1)
 		return XM_TRANSPORT_ERROR_FOPENFAIL;
 	
@@ -1070,7 +1066,6 @@ u16 XMTransport::save(const char *filename, Song *song)
 				
 				fwrite(&smp_loop_start, 4, 1, xmfile);
 				fwrite(&smp_loop_length, 4, 1, xmfile);
-				iprintf("loopstart: %d looplength: %d\n", smp_loop_start, smp_loop_length);
 				
 				// Sample Volume
 				u8 smp_vol = (sample->getVolume() + 1) / 4; // Convert scale to 0-64

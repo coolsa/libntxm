@@ -208,3 +208,12 @@ u32 my_getFreeDiskSpace(void)
 		return fiData.f_bsize*fiData.f_bfree;
 	}
 }
+
+u32 my_getFileSize(const char *filename)
+{
+	FILE *file = fopen(filename, "r");
+	fseek(file, 0, SEEK_END);
+	u32 filesize = ftell(file);
+	fclose(file);
+	return filesize;
+}

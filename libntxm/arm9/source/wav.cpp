@@ -72,7 +72,7 @@ bool Wav::load(const char *filename)
 	
 	// Check if the file is not too big
 	fseek(fileh, 0, SEEK_END);
-	u32 filesize = ftell (fileh);
+	u32 filesize = ftell(fileh);
 	
 	u32 free_ram = my_get_free_mem();
 	

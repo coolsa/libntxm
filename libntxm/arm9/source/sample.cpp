@@ -117,7 +117,14 @@ Sample::Sample(const char *filename, u8 _loop, bool *_success)
 	calcSize();
 	
 	if(wav.isStereo() == true)
-		convertStereoToMono();
+	{
+		if(!convertStereoToMono())
+		{
+			printf("Stereo 2 Mono conversion failed\n");
+			*_success = false;
+			return;
+		}
+	}
 	
 	volume = 255;
 	
@@ -718,8 +725,15 @@ u16 Sample::findClosestFreq(u32 freq)
 	return middle;
 }
 
-void Sample::convertStereoToMono(void)
+bool Sample::convertStereoToMono(void)
 {
+	// Check if there is enough RAM for this
+	if(my_get_free_mem() < size)
+	{
+		printf("not enough ram for stereo 2 mono conversion\n");
+		return false;
+	}
+	
 	if(is_16_bit == true)
 	{
 		// Make a buffer for the converted sample
@@ -738,7 +752,9 @@ void Sample::convertStereoToMono(void)
 		
 		// Delete the temporary buffer
 		free(tmpbuf);
-	} else {
+	}
+	else
+	{
 		// Make a buffer for the converted sample
 		s8 *tmpbuf = (s8*)malloc(size);
 		s8 *src = (s8*)sound_data;
@@ -756,6 +772,7 @@ void Sample::convertStereoToMono(void)
 		// Delete the temporary buffer
 		free(tmpbuf);	
 	}
+	return true;
 }
 
 void Sample::fade(u32 startsample, u32 endsample, bool in)
@@ -828,12 +845,12 @@ void Sample::setupPingPongLoop(void)
 	original_n_samples = n_samples;
 	
 	u32 original_size = size;
-	iprintf("%d\n",__LINE__);
+	
 	pingpong_data = realloc(pingpong_data, original_size + loop_length);
-	iprintf("%d\n",__LINE__);
+	
 	// Copy sound data until loop end
 	memcpy(pingpong_data, original_data, loop_start + loop_length);
-	iprintf("%d\n",__LINE__);
+	
 	// Copy reverse loop
 	if(is_16_bit)
 	{
@@ -853,22 +870,22 @@ void Sample::setupPingPongLoop(void)
 		for(u32 i=0; i<loop_length; ++i)
 			pp[pos+i] = orig[pos-i];
 	}
-	iprintf("%d\n",__LINE__);
+	
 	// Copy rest
 	u32 pos = loop_start + loop_length;
 	iprintf("%d %d %d %d\n", loop_start, loop_length, original_size, pos);
 	memcpy((u8*)pingpong_data+ pos + loop_length, (u8*)original_data + pos, original_size - pos);
-	iprintf("%d\n",__LINE__);
+	
 	// Set as new sound data
 	sound_data = pingpong_data;
-	iprintf("%d\n",__LINE__);
+	
 	if(is_16_bit)
 		n_samples = (original_size + loop_length) / 2;
 	else
 		n_samples = original_size + loop_length;
-	iprintf("%d\n",__LINE__);
+	
 	calcSize();
-	iprintf("%d\n",__LINE__);
+	
 	DC_FlushAll();
 }
 

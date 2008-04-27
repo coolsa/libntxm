@@ -105,7 +105,7 @@ class Sample
 		void setFormat(void);
 		void calcRelnoteAndFinetune(u32 freq);
 		u16 findClosestFreq(u32 freq);
-		void convertStereoToMono(void);
+		bool convertStereoToMono(void);
 		
 		void fade(u32 startsample, u32 endsample, bool in);
 		
