@@ -544,8 +544,6 @@ void Sample::delPart(u32 startsample, u32 endsample)
 		loop_length = size;
 	}
 	
-	iprintf("%d %d %d\n", loop_start, loop_length, size);
-	
 	if(restore_ping_pong)
 		setLoop(PING_PONG_LOOP);
 }
@@ -873,7 +871,7 @@ void Sample::setupPingPongLoop(void)
 	
 	// Copy rest
 	u32 pos = loop_start + loop_length;
-	iprintf("%d %d %d %d\n", loop_start, loop_length, original_size, pos);
+	
 	memcpy((u8*)pingpong_data+ pos + loop_length, (u8*)original_data + pos, original_size - pos);
 	
 	// Set as new sound data
