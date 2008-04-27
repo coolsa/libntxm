@@ -36,6 +36,7 @@
 #include <nds.h>
 
 #include "ntxm/ntxmtools.h"
+#include <sys/statvfs.h>
 
 s32 unfreed_malloc_calls = 0;
 
@@ -81,7 +82,7 @@ void my_end_malloc_invariant(void)
 void *my_memalign(size_t blocksize, size_t bytes)
 {
 	void *buf = memalign(blocksize, bytes);
-	if((u32)buf & blocksize != 0) {
+	if( ((u32)buf & blocksize) != 0) {
 		iprintf("Memalign error! %p ist not %u-aligned\n", buf, (u16)blocksize);
 		return 0;
 	} else {
@@ -187,4 +188,22 @@ u32 my_get_free_mem(void)
 	}
 	
 	return FreeMemSize;
+}
+
+u32 my_getUsedRam(void)
+{
+	struct mallinfo info = mallinfo();
+
+	return info.usmblks + info.uordblks; 
+}
+
+u32 my_getFreeDiskSpace(void)
+{
+	struct statvfs fiData;
+
+	if((statvfs("/",&fiData)) < 0 ) {
+		return 0;
+	} else {
+		return fiData.f_bsize*fiData.f_bfree;
+	}
 }
