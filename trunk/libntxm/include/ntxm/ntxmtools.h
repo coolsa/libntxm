@@ -55,5 +55,6 @@ u32 my_get_free_mem(void);
 
 u32 my_getFreeDiskSpace(void); // Gets free disk space in bytes
 u32 my_getUsedRam(void);
+u32 my_getFileSize(const char *filename);
 
 #endif
