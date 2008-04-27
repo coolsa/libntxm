@@ -226,8 +226,6 @@ void Song::addPattern(u16 length)
 	u8 i,j;
 	for(i=0;i<n_channels;++i)
 	{
-		
-		
 		patterns[n_patterns-1][i] = (Cell*)malloc(sizeof(Cell)*patternlengths[n_patterns-1]);
 		
 		Cell *cell;
