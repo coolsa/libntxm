@@ -54,7 +54,8 @@ char xmtransporterrors[][100] =
 	"file too big for ram",
 	"",
 	"pattern too long",
-	"file is zero byte"};
+	"file is zero byte",
+	"disk is full"};
 
 /* ===================== PUBLIC ===================== */
 
@@ -641,6 +642,13 @@ u16 XMTransport::load(const char *filename, Song **_song)
 // Saves a song to a file
 u16 XMTransport::save(const char *filename, Song *song)
 {
+	if(my_getUsedRam() > my_getFreeDiskSpace())
+	{
+		return XM_TRANSPORT_DISK_FULL;
+	}
+	
+	iprintf("free disk space: %d kb\n", my_getFreeDiskSpace() / 1024);
+	
 	my_start_malloc_invariant(); // security
 	
 	//

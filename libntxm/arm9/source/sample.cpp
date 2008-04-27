@@ -322,6 +322,9 @@ bool Sample::setLoop(u8 loop_) // Set loop type. Can fail due to memory constrai
 	if(loop_ == loop)
 		return true;
 	
+	if(loop == NO_LOOP) // If no loop is set, set the loop points to start and end of sample
+		setLoopStartAndLength(0, n_samples);
+	
 	if(loop == PING_PONG_LOOP) // Switching from ping-pong to sth else
 	{
 		removePingPongLoop();
@@ -456,9 +459,6 @@ void Sample::delPart(u32 startsample, u32 endsample)
 	
 	// TODO: Make sure there is enough RAM for this!
 	
-	// These will become invalid, so we delete them to get ram for this operation
-	//delete_subsampled_versions();
-	
 	u32 new_n_samples = n_samples - (endsample - startsample);
 	
 	u8 bps;
@@ -474,28 +474,83 @@ void Sample::delPart(u32 startsample, u32 endsample)
 	sound_data = new_sounddata;
 	n_samples = new_n_samples;
 	
-	// Now everything's clear and we set the variables right and make the subsampled versions
+	// Now everything's clear and we set the variables right
 	calcSize();
 	
-	if(loop_start > n_samples)
+	u32 loop_end = loop_start + loop_length;
+	u32 start = startsample * (is_16_bit?2:1);
+	u32 end = endsample * (is_16_bit?2:1);
+	u32 del = end - start;
+	
+	// Update Loop
+	if(loop != NO_LOOP)
+	{
+		if(start < loop_end)
+		{
+			if(start > loop_start)
+			{
+				if(end < loop_end)
+				{
+					loop_length -= del;
+				}
+				else
+				{
+					loop_length = start - loop_start;
+				}
+			}
+			else
+			{
+				if(end > loop_end)
+				{
+					loop_start = 0;
+					loop_length = getSize();
+				}
+				else if(end > loop_start)
+				{
+					loop_length -= end - loop_start;
+					loop_start = start;
+				}
+				else
+				{
+					loop_start -= del;
+				}
+			}
+		}
+	}
+	
+	u32 size = getSize();
+	if(loop_start > size)
+	{
+		loop_start = size;
+	}
+	if(loop_start + loop_length > size)
+	{
+		 loop_length = size - loop_start;
+	}
+	if(loop_start == loop_length)
 	{
 		loop_start = 0;
-		loop_length = n_samples;
+		loop_length = size;
 	}
-	else if(loop_start + loop_length > n_samples)
-	{
-		loop_length = n_samples - loop_start; 
-	}
+	
+	if(loop == PING_PONG_LOOP)
+		updatePingPongLoop();
 }
 
 void Sample::fadeIn(u32 startsample, u32 endsample)
 {
 	fade(startsample, endsample, true);
+	
+	if(loop == PING_PONG_LOOP)
+		updatePingPongLoop();
 }
 
 void Sample::fadeOut(u32 startsample, u32 endsample)
 {
 	fade(startsample, endsample, false);
+	
+	if( loop == PING_PONG_LOOP )
+		updatePingPongLoop();
 }
 
 void Sample::reverse(u32 startsample, u32 endsample)
@@ -545,15 +600,14 @@ void Sample::reverse(u32 startsample, u32 endsample)
 	
 	// Now everything's clear and we set the variables right
 	calcSize();
-	loop_start = loop_length = 0;
+	
+	if( loop == PING_PONG_LOOP )
+		updatePingPongLoop();
 }
 
 
 void Sample::normalize(u8 percent)
 {
-	// These will become invalid, so we delete them to get ram for this operation
-	//delete_subsampled_versions();
-	
 	if(is_16_bit == true)
 	{
 		s16 *sounddata = (s16*)(sound_data);
@@ -582,6 +636,9 @@ void Sample::normalize(u8 percent)
 			sounddata[i] = smp;
 		}
 	}
+	
+	if( loop == PING_PONG_LOOP )
+		updatePingPongLoop();
 }
 
 #endif
@@ -702,9 +759,6 @@ void Sample::fade(u32 startsample, u32 endsample, bool in)
 	
 	// TODO: Make sure there is enough RAM for this!
 	
-	// These will become invalid, so we delete them to get ram for this operation
-	//delete_subsampled_versions();
-	
 	s32 offset = startsample;
 	s32 length = endsample - startsample + 1;
 	
@@ -757,7 +811,9 @@ void Sample::fade(u32 startsample, u32 endsample, bool in)
 	
 	// Now everything's clear and we set the variables right
 	calcSize();
-	loop_start = loop_length = 0;
+	
+	if( loop == PING_PONG_LOOP )
+		updatePingPongLoop();
 }
 
 void Sample::setupPingPongLoop(void)

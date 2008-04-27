@@ -142,6 +142,11 @@ void Player::playNote(u8 note, u8 volume, u8 channel, u8 instidx)
 	if( (state.playing == true) && (song->channelMuted(channel) == true) )
 		return;
 	
+	Instrument *inst = song->instruments[instidx];
+	
+	if(inst == 0)
+		return;
+	
 	if(channel == 255) // Find a free channel
 	{
 		s8 c = MAX_CHANNELS-1;
@@ -162,7 +167,7 @@ void Player::playNote(u8 note, u8 volume, u8 channel, u8 instidx)
 	state.channel_fade_ms[channel] = 0;
 	state.channel_instrument[channel] = instidx;
 	
-	Instrument *inst = song->instruments[instidx];
+	
 	
 	if(volume == NO_VOLUME) {
 		state.channel_volume[channel] = MAX_VOLUME * inst->getSampleForNote(note)->getVolume() / 255;
@@ -175,10 +180,7 @@ void Player::playNote(u8 note, u8 volume, u8 channel, u8 instidx)
 	state.channel_note[channel]   = note;
 	state.channel_active[channel] = 1;
 	
-	if(inst != 0)
-	{
-		inst->play(note, volume, channel);
-	}
+	inst->play(note, volume, channel);
 }
 
 // Play the given sample (and send a notification when done)
@@ -339,7 +341,10 @@ void Player::playTimerHandler(void)
 			SCHANNEL_VOL(channel) = SOUND_VOL(chnvol);
 			
 			if(state.channel_active[channel] == CHANNEL_TO_BE_DISABLED)
+			{
 				state.channel_active[channel] = 0;
+				SCHANNEL_CR(channel) = 0;
+			}
 		}
 	}
 	
@@ -713,7 +718,7 @@ void Player::handleFade(u32 passed_time)
 				state.channel_fade_ms[channel] = 0;
 			
 			// Calculate volume from initial volume, target volume and remaining fade time
-			// Can be done way quicker using bresenham
+			// Can be done way quicker using fixed point
 			float fslope = (float)(state.channel_volume[channel] - state.channel_fade_target_volume[channel])
 					/ (float)FADE_OUT_MS;
 			
