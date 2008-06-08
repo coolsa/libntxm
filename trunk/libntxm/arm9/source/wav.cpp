@@ -222,7 +222,74 @@ bool Wav::load(const char *filename)
 	return true;
 }
 
-bool Wav::save(const char *filename) {
+bool Wav::save(const char *filename)
+{
+	FILE *fileh = fopen(filename, "w");
+	if(fileh == NULL)
+		return false;
+	
+	// RIFF header
+	fwrite("RIFF", 1, 4, fileh);
+	
+	u32 data_chunk_size = bit_per_sample_ / 8 * n_channels_ * n_samples_;
+	
+	u32 riff_size = data_chunk_size + 32;
+	fwrite(&riff_size, 4, 1, fileh);
+
+	// WAVE header
+	fwrite("WAVE", 1, 4, fileh);
+
+	// fmt chunk
+	fwrite("fmt ", 1, 4, fileh);
+
+	u32 fmt_chunk_size = 16;
+	fwrite(&fmt_chunk_size, 4, 1, fileh);
+	
+	u16 compression_code = 1; // Always PCM
+	fwrite(&compression_code, 2, 1, fileh);
+
+	u16 nch = n_channels_;
+	fwrite(&nch, 2, 1, fileh);
+
+	u32 sampling_rate = sampling_rate_;
+	fwrite(&sampling_rate, 4, 1, fileh);
+
+	u32 avg_bytes_per_sec = sampling_rate_ * bit_per_sample_ / 8 * n_channels_;
+	fwrite(&avg_bytes_per_sec, 4, 1, fileh);
+
+	u16 block_align = bit_per_sample_ / 8 * n_channels_;
+	fwrite(&block_align, 2, 1, fileh);
+
+	u16 bit_per_sample = bit_per_sample_;
+	fwrite(&bit_per_sample, 2, 1, fileh);
+
+	// data chunk
+	fwrite("data", 1, 4, fileh);
+	
+	fwrite(&data_chunk_size, 4, 1, fileh);
+
+	printf("rate: %u\ndata: %u\n", sampling_rate_, data_chunk_size);
+	
+	if(bit_per_sample == 8)
+	{
+		// Convert from unsigned to signed
+		s8 smp = 0;
+		for(u32 i=0; i<data_chunk_size; ++i)
+		{
+			smp = (s8)((s16)audio_data_[i] - 128);
+			fwrite( &smp, 1, 1, fileh );
+		}
+	}
+	else if(bit_per_sample == 16)
+	{
+		printf("writing...\n");
+		u16 *audio = (u16*)audio_data_;
+		fwrite(audio, data_chunk_size, 1, fileh);
+		printf("ok\n");
+	}
+
+	fclose(fileh);
+
 	return true; // Hehe
 }
 
