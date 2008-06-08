@@ -584,8 +584,11 @@ void Sample::fadeOut(u32 startsample, u32 endsample)
 
 void Sample::reverse(u32 startsample, u32 endsample)
 {
-	if(endsample >= n_samples)
-		endsample = n_samples-1;
+	void *data = getData();
+	u32 nsamples = getNSamples();
+	
+	if(endsample >= nsamples)
+		endsample = nsamples-1;
 	
 	// TODO: Make sure there is enough RAM for this!
 	
@@ -595,7 +598,7 @@ void Sample::reverse(u32 startsample, u32 endsample)
 	if(is_16_bit == true)
 	{
 		s16 *new_sounddata = (s16*)malloc(2 * length);
-		s16 *sounddata = (s16*)(sound_data);
+		s16 *sounddata = (s16*)(data);
 		
 		// First reverse the selected region
 		for(s32 i=0;i<length;++i) {
@@ -612,7 +615,7 @@ void Sample::reverse(u32 startsample, u32 endsample)
 	} else {
 		
 		s8 *new_sounddata = (s8*)malloc(length);
-		s8 *sounddata = (s8*)(sound_data);
+		s8 *sounddata = (s8*)(data);
 		
 		// First reverse the selected region
 		for(s32 i=0;i<length;++i) {
@@ -637,12 +640,15 @@ void Sample::reverse(u32 startsample, u32 endsample)
 
 void Sample::normalize(u8 percent)
 {
+	void *data = getData();
+	u32 nsamples = getNSamples();
+	
 	if(is_16_bit == true)
 	{
-		s16 *sounddata = (s16*)(sound_data);
+		s16 *sounddata = (s16*)(data);
 		s32 smp;
 		
-		for(u32 i=0;i<n_samples;++i) {
+		for(u32 i=0;i<nsamples;++i) {
 			smp = percent * sounddata[i] / 100;
 			if(smp>32767)
 				smp=32767;
@@ -653,10 +659,10 @@ void Sample::normalize(u8 percent)
 		
 	} else {
 		
-		s8 *sounddata = (s8*)(sound_data);
+		s8 *sounddata = (s8*)(data);
 		s16 smp;
 		
-		for(u32 i=0;i<n_samples;++i) {
+		for(u32 i=0;i<nsamples;++i) {
 			smp = percent * sounddata[i] / 100;
 			if(smp>127)
 				smp=127;
@@ -793,8 +799,11 @@ bool Sample::convertStereoToMono(void)
 
 void Sample::fade(u32 startsample, u32 endsample, bool in)
 {
-	if(endsample >= n_samples)
-		endsample = n_samples-1;
+	void *data = getData();
+	u32 nsamples = getNSamples();
+	
+	if(endsample >= nsamples)
+		endsample = nsamples-1;
 	
 	// TODO: Make sure there is enough RAM for this!
 	
@@ -804,7 +813,7 @@ void Sample::fade(u32 startsample, u32 endsample, bool in)
 	if(is_16_bit == true)
 	{
 		s16 *new_sounddata = (s16*)malloc(2 * length);
-		s16 *sounddata = (s16*)(sound_data);
+		s16 *sounddata = (s16*)(data);
 		
 		// First create a buffer with the faded sound data
 		if(in==true) {
@@ -827,7 +836,7 @@ void Sample::fade(u32 startsample, u32 endsample, bool in)
 	} else {
 		
 		s8 *new_sounddata = (s8*)malloc(length);
-		s8 *sounddata = (s8*)(sound_data);
+		s8 *sounddata = (s8*)(data);
 		
 		// First create a buffer with the faded sound data
 		if(in==true) {
