@@ -56,6 +56,44 @@
 
 /* ===================== PUBLIC ===================== */
 
+inline u32 linear_freq_table_lookup(u32 note)
+{
+	/*
+	// readable version
+	if(note<=LINEAR_FREQ_TABLE_MAX_NOTE*N_FINETUNE_STEPS) {
+		if(note>=LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS) {
+			return linear_freq_table[note-LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS];
+		} else {
+			u32 octaveoffset = ((LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)-note) / (12*N_FINETUNE_STEPS) + 1;
+			u32 relnote = note % (12*N_FINETUNE_STEPS);
+			#ifdef ARM7
+			//CommandDbgOut("minoct:%u noteoct:%u\n",
+			//	      (LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)/(12*N_FINETUNE_STEPS),
+			//	      note/(12*N_FINETUNE_STEPS)
+			//	     );
+			#endif
+			#ifdef ARM9
+			iprintf("%u %u\n",octaveoffset,relnote);
+			#endif
+			return linear_freq_table[relnote] >> octaveoffset;
+		}
+	}
+	return 0;
+	*/
+	
+	// fast version
+	if(note<=LINEAR_FREQ_TABLE_MAX_NOTE*N_FINETUNE_STEPS)
+	{
+		if(note>=LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS) {
+			return linear_freq_table[note-LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS];
+		} else {
+			return linear_freq_table[note % (12*N_FINETUNE_STEPS)] >>
+				(((LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)-note) / (12*N_FINETUNE_STEPS)  + 1);
+		}
+	}
+	return 0;
+}
+
 #ifdef ARM9
 
 Sample::Sample(void *_sound_data, u32 _n_samples, u16 _sampling_frequency, bool _is_16_bit,
@@ -142,45 +180,19 @@ Sample::~Sample()
 	free(sound_data);
 }
 
-#endif
-
-inline u32 linear_freq_table_lookup(u32 note)
+void Sample::saveAsWav(char *filename)
 {
-	/*
-	// readable version
-	if(note<=LINEAR_FREQ_TABLE_MAX_NOTE*N_FINETUNE_STEPS) {
-		if(note>=LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS) {
-			return linear_freq_table[note-LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS];
-		} else {
-			u32 octaveoffset = ((LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)-note) / (12*N_FINETUNE_STEPS) + 1;
-			u32 relnote = note % (12*N_FINETUNE_STEPS);
-			#ifdef ARM7
-			//CommandDbgOut("minoct:%u noteoct:%u\n",
-			//	      (LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)/(12*N_FINETUNE_STEPS),
-			//	      note/(12*N_FINETUNE_STEPS)
-			//	     );
-			#endif
-			#ifdef ARM9
-			iprintf("%u %u\n",octaveoffset,relnote);
-			#endif
-			return linear_freq_table[relnote] >> octaveoffset;
-		}
-	}
-	return 0;
-	*/
-	
-	// fast version
-	if(note<=LINEAR_FREQ_TABLE_MAX_NOTE*N_FINETUNE_STEPS)
-	{
-		if(note>=LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS) {
-			return linear_freq_table[note-LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS];
-		} else {
-			return linear_freq_table[note % (12*N_FINETUNE_STEPS)] >>
-				(((LINEAR_FREQ_TABLE_MIN_NOTE*N_FINETUNE_STEPS-1)-note) / (12*N_FINETUNE_STEPS)  + 1);
-		}
-	}
-	return 0;
+	wav.setCompression(0);
+	wav.setNChannels(1);
+	printf("%u %u %u\n", rel_note,finetune, LOOKUP_FREQ(rel_note,finetune) );
+	wav.setSamplingRate(LOOKUP_FREQ(rel_note+96,finetune));
+	wav.setBitPerSample(is_16_bit?16:8);
+	wav.setNSamples(n_samples);
+	wav.setAudioData((u8*)getData());
+	wav.save(filename);
 }
+
+#endif
 
 #if defined(ARM7)
 

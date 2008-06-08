@@ -57,6 +57,8 @@ class Sample
 		Sample(const char *filename, u8 _loop, bool *_success);
 		~Sample();
 		
+		void saveAsWav(char *filename);
+		
 		void play(u8 note, u8 volume_, u8 channel  /* effects here */);
 		void bendNote(u8 note, u8 basenote, u8 finetune, u8 channel);
 		u32 calcPlayLength(u8 note);
