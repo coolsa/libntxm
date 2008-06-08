@@ -223,7 +223,7 @@ void Song::addPattern(u16 length)
 	
 	patterns[n_patterns-1] = (Cell**)malloc(sizeof(Cell*)*n_channels);
 	
-	u8 i,j;
+	u16 i,j;
 	for(i=0;i<n_channels;++i)
 	{
 		patterns[n_patterns-1][i] = (Cell*)malloc(sizeof(Cell)*patternlengths[n_patterns-1]);
@@ -245,15 +245,15 @@ void Song::channelAdd(void) {
 	for(u8 pattern=0;pattern<n_patterns;++pattern) {
 		patterns[pattern] = (Cell**)realloc(patterns[pattern], sizeof(Cell*)*(n_channels+1));
 		patterns[pattern][n_channels] = (Cell*)malloc(sizeof(Cell)*internal_patternlengths[pattern]);
-		
+
 		// Clear
 		Cell *cell;
-		for(u8 j=0;j<internal_patternlengths[pattern];++j) {
+		for(u16 j=0;j<internal_patternlengths[pattern];++j) {
 			cell = &patterns[pattern][n_channels][j];
 			clearCell(cell);
 		}
 	}
-	
+
 	n_channels++;
 	
 }
