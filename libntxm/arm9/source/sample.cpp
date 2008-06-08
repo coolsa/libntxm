@@ -336,6 +336,12 @@ bool Sample::setLoop(u8 loop_) // Set loop type. Can fail due to memory constrai
 	
 	loop = loop_;
 	
+	if(loop_ == NO_LOOP)
+	{
+		setLoopStart(0);
+		setLoopLength(n_samples);
+	}
+	
 	if(loop_ == PING_PONG_LOOP)
 	{
 		// Check if enough memory is available
