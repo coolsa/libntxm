@@ -64,7 +64,7 @@ Song::Song(u8 _speed, u8 _bpm, u8 _channels)
 	patternlengths = (u16*)malloc(sizeof(u16)*MAX_PATTERNS);
 	internal_patternlengths = (u16*)malloc(sizeof(u16)*MAX_PATTERNS);
 	pattern_order_table = (u8*)malloc(sizeof(u8)*MAX_POT_LENGTH);
-	instruments = (Instrument**)malloc(sizeof(Instrument*)*MAX_INSTRUMENTS);
+	instruments = (Instrument**)calloc(1, sizeof(Instrument*)*MAX_INSTRUMENTS);
 	name = (char*)malloc(MAX_SONG_NAME_LENGTH+1);
 	my_memset(name, 0, MAX_SONG_NAME_LENGTH+1);
 	my_strncpy(name, "unnamed", MAX_SONG_NAME_LENGTH);
