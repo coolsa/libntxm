@@ -282,10 +282,8 @@ bool Wav::save(const char *filename)
 	}
 	else if(bit_per_sample == 16)
 	{
-		printf("writing...\n");
 		u16 *audio = (u16*)audio_data_;
 		fwrite(audio, data_chunk_size, 1, fileh);
-		printf("ok\n");
 	}
 
 	fclose(fileh);
