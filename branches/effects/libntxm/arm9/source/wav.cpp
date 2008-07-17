@@ -1,48 +1,35 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+#include "wav.h"
+
+#if defined(ARM9)
+#include "tools.h"
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <nds.h>
 
-#ifdef ARM9
+#if defined(ARM9)
+
 #include <fat.h>
-#endif
-
-#include "ntxm/wav.h"
-
-#ifdef ARM9
-#include "ntxm/ntxmtools.h"
 #endif
 
 /* ===================== PUBLIC ===================== */
@@ -63,6 +50,9 @@ bool Wav::load(const char *filename)
 #if defined(ARM9)
 	// Init
 	
+	if(!myInitFiles())
+		return false;
+	
 	FILE *fileh;
 	
 	fileh = fopen(filename, "r");
@@ -72,21 +62,17 @@ bool Wav::load(const char *filename)
 	
 	// Check if the file is not too big
 	fseek(fileh, 0, SEEK_END);
-	u32 filesize = ftell(fileh);
+	u32 filesize = ftell (fileh);
 	
-	u32 free_ram = my_get_free_mem();
-	
-	if( filesize > free_ram )
-	{
+	if(filesize > MAX_WAV_SIZE) {
 		fclose(fileh);
-		iprintf("file too big for ram\n");
+		//iprintf("file too big\n");
 		return false;
 	}
 	
-	if(filesize == 0)
-	{
+	if(filesize == 0) {
 		fclose(fileh);
-		iprintf("0-byte file!\n");
+		//iprintf("0-byte file!\n");
 		return false;
 	}
 	
@@ -196,7 +182,7 @@ bool Wav::load(const char *filename)
 	memset(audio_data_, 0, data_chunk_size);
 	
 	if(audio_data_ == 0) {
-		iprintf("Could not alloc mem for wav.\n");
+		//iprintf("Could not alloc mem for wav.\n");
 		free(buf);
 		fclose(fileh);
 		return false;
@@ -222,72 +208,7 @@ bool Wav::load(const char *filename)
 	return true;
 }
 
-bool Wav::save(const char *filename)
-{
-	FILE *fileh = fopen(filename, "w");
-	if(fileh == NULL)
-		return false;
-	
-	// RIFF header
-	fwrite("RIFF", 1, 4, fileh);
-	
-	u32 data_chunk_size = bit_per_sample_ / 8 * n_channels_ * n_samples_;
-	
-	u32 riff_size = data_chunk_size + 32;
-	fwrite(&riff_size, 4, 1, fileh);
-
-	// WAVE header
-	fwrite("WAVE", 1, 4, fileh);
-
-	// fmt chunk
-	fwrite("fmt ", 1, 4, fileh);
-
-	u32 fmt_chunk_size = 16;
-	fwrite(&fmt_chunk_size, 4, 1, fileh);
-	
-	u16 compression_code = 1; // Always PCM
-	fwrite(&compression_code, 2, 1, fileh);
-
-	u16 nch = n_channels_;
-	fwrite(&nch, 2, 1, fileh);
-
-	u32 sampling_rate = sampling_rate_;
-	fwrite(&sampling_rate, 4, 1, fileh);
-
-	u32 avg_bytes_per_sec = sampling_rate_ * bit_per_sample_ / 8 * n_channels_;
-	fwrite(&avg_bytes_per_sec, 4, 1, fileh);
-
-	u16 block_align = bit_per_sample_ / 8 * n_channels_;
-	fwrite(&block_align, 2, 1, fileh);
-
-	u16 bit_per_sample = bit_per_sample_;
-	fwrite(&bit_per_sample, 2, 1, fileh);
-
-	// data chunk
-	fwrite("data", 1, 4, fileh);
-	
-	fwrite(&data_chunk_size, 4, 1, fileh);
-
-	printf("rate: %u\ndata: %u\n", sampling_rate_, data_chunk_size);
-	
-	if(bit_per_sample == 8)
-	{
-		// Convert from unsigned to signed
-		s8 smp = 0;
-		for(u32 i=0; i<data_chunk_size; ++i)
-		{
-			smp = (s8)((s16)audio_data_[i] - 128);
-			fwrite( &smp, 1, 1, fileh );
-		}
-	}
-	else if(bit_per_sample == 16)
-	{
-		u16 *audio = (u16*)audio_data_;
-		fwrite(audio, data_chunk_size, 1, fileh);
-	}
-
-	fclose(fileh);
-
+bool Wav::save(const char *filename) {
 	return true; // Hehe
 }
 

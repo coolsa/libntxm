@@ -1,34 +1,22 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+#include "ntxm/instrument.h"
 
 #ifdef ARM9
 #include <stdio.h>
@@ -37,16 +25,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ntxm/instrument.h"
-#include "ntxm/ntxmtools.h"
-#include "ntxm/command.h"
+#include "tools.h"
+
+#include "command.h"
+
+#ifdef ARM9
+#include "tools.h"
+#endif
 
 #ifdef ARM9
 
 Instrument::Instrument(const char *_name, u8 _type, u8 _volume)
-	:type(_type), volume(_volume),
-	 n_vol_points(0), vol_env_on(false), vol_env_sustain(false), vol_env_loop(false),
-	 n_pan_points(0)
+  :name(0),type(_type), volume(_volume),samples(0), n_samples(0),
+   note_samples(0), 
+   n_vol_points(0), vol_env_on(true), vol_env_sustain(false), vol_env_loop(false),
+   n_pan_points(0), pan_env_on(false), pan_env_sustain(false), pan_env_loop(false),
+   envelope_ms(0), envelope_pixels(0)
 {
 	name = (char*)calloc(MAX_INST_NAME_LENGTH+1, 1);
 	
@@ -54,18 +48,22 @@ Instrument::Instrument(const char *_name, u8 _type, u8 _volume)
 	
 	note_samples = (u8*)calloc(sizeof(u8)*MAX_OCTAVE*12, 1);
 	
-	samples = NULL;
-	n_samples = 0;
+	//	samples = NULL;
+	//	n_samples = 0;
 }
 
 Instrument::Instrument(const char *_name, Sample *_sample, u8 _volume)
-	:type(INST_SAMPLE), volume(_volume)
+	:name(0),type(INST_SAMPLE), volume(_volume),samples(0), n_samples(0),
+   note_samples(0), 
+   n_vol_points(0), vol_env_on(true), vol_env_sustain(false), vol_env_loop(false),
+   n_pan_points(0), pan_env_on(false), pan_env_sustain(false), pan_env_loop(false),
+   envelope_ms(0), envelope_pixels(0)
 {
 	name = (char*)malloc(MAX_INST_NAME_LENGTH+1);
 	for(u16 i=0; i<MAX_INST_NAME_LENGTH+1; ++i) name[i] = '\0';
 	my_strncpy(name, _name, MAX_INST_NAME_LENGTH);
 	
-	samples = (Sample**)calloc(1, sizeof(Sample*)*1);
+	samples = (Sample**)malloc(sizeof(Sample*)*1);
 	samples[0] = _sample;
 	n_samples = 1;
 	
@@ -76,15 +74,15 @@ Instrument::Instrument(const char *_name, Sample *_sample, u8 _volume)
 
 Instrument::~Instrument()
 {
-	for(u8 i=0;i<n_samples;++i) {
-		delete samples[i];
-	}
-	if(samples != NULL)
-		free(samples);
-	
-	free(note_samples);
-	
-	free(name);
+  if (samples) {
+    for(u8 i=0;i<n_samples;++i)
+      delete samples[i];
+  } else iprintf(">_< no samples list for this instrument\n");
+  if(samples != NULL)
+    free(samples);
+  
+  free(note_samples);
+  free(name);
 }
 
 void Instrument::addSample(Sample *sample)
@@ -132,10 +130,16 @@ Sample *Instrument::getSampleForNote(u8 _note) {
 
 #ifdef ARM7
 
+void Instrument::advance(u8 _note, long offset, u8 _channel)
+{
+  if (n_samples>0 && type==INST_SAMPLE)
+    samples[note_samples[_note]]->advance(_note,offset, _channel);
+}
+
 void Instrument::play(u8 _note, u8 _volume, u8 _channel /* effects here */)
 {
-	envelope_ms[_channel] = 0;
-	envelope_pixels[_channel] = 0;
+	envelope_ms = 0;
+	envelope_pixels = 0;
 	
 	if(_note > MAX_NOTE) {
 		//CommandDbgOut("Note (%u) > MAX_NOTE (%u)\n",_note,MAX_NOTE);
@@ -145,13 +149,13 @@ void Instrument::play(u8 _note, u8 _volume, u8 _channel /* effects here */)
 	u8 play_volume = volume * _volume / 255;
 	
 	if((vol_env_on)&&(n_vol_points>0))
-		play_volume = play_volume * vol_envelope_y[0] / 64;
+	  play_volume = play_volume * vol_envelope_y[0] / 64;
 	
 	switch(type) {
-		case INST_SAMPLE:
-			if( (n_samples > 0) && (samples[note_samples[_note]] != 0) )
-				samples[note_samples[_note]]->play(_note, play_volume, _channel);
-			break;
+	case INST_SAMPLE:
+	  if(n_samples > 0)
+	    samples[note_samples[_note]]->play(_note, play_volume, _channel);
+	  break;
 	}
 }
 
@@ -248,47 +252,21 @@ void Instrument::setPanningEnvelope(u16 *envelope, u8 n_points, bool pan_env_on_
 	pan_env_loop    = pan_env_loop_;
 }
 
-void Instrument::setVolumeEnvelopePoints(u16 *xs, u16 *ys, u16 n_points)
-{
-	n_vol_points = n_points;
-	for(u8 i=0; i<n_points; ++i)
-	{
-		vol_envelope_x[i] = xs[i];
-		vol_envelope_y[i] = ys[i];
-	}
-}
-
-u16 Instrument::getVolumeEnvelope(u16 **xs, u16 **ys)
-{
-	*xs = vol_envelope_x;
-	*ys = vol_envelope_y;
-	
-	return n_vol_points;
-}
-
-u16 Instrument::getPanningEnvelope(u16 **xs, u16 **ys)
-{
-	*xs = pan_envelope_x;
-	*ys = pan_envelope_y;
-	
-	return n_pan_points;
-}
-
 #endif
 
-void Instrument::updateEnvelopePos(u8 bpm, u8 ms_passed, u8 channel)
+void Instrument::updateEnvelopePos(u8 bpm, u8 ms_passed)
 {
-	envelope_ms[channel] += ms_passed;
-	envelope_pixels[channel] = envelope_ms[channel] * bpm * 50 / 120 / 1000; // 50 pixels per second at 120 BPM
+	envelope_ms += ms_passed;
+	envelope_pixels = envelope_ms * bpm * 50 / 120 / 1000; // 50 pixels per second at 120 BPM
 }
 
-u16 Instrument::getEnvelopeAmp(u8 channel)
+u16 Instrument::getEnvelopeAmp(void)
 {
 	if( (n_vol_points == 0) || (vol_env_on == false) )
 		return 64;
 	
 	u8 envpoint = 0;
-	while( (envpoint < n_vol_points - 1) && (envelope_pixels[channel] >= vol_envelope_x[envpoint+1]) )
+	while( (envpoint < n_vol_points - 1) && (envelope_pixels >= vol_envelope_x[envpoint+1]) )
 		envpoint++;
 	
 	if(envpoint >= n_vol_points - 1) // Last env point?
@@ -299,7 +277,7 @@ u16 Instrument::getEnvelopeAmp(u8 channel)
 	u16 x2 = vol_envelope_x[envpoint+1];
 	u16 y2 = vol_envelope_y[envpoint+1];
 	
-	u16 rel_x = envelope_pixels[channel] - x1;
+	u16 rel_x = envelope_pixels - x1;
 	
 	u16 y = y1 + rel_x * (y2 - y1) / (x2 - x1);
 	if(y > 64)

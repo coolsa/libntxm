@@ -1,34 +1,20 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
-
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 /*
@@ -42,33 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "ntxm/command.h"
-#include "ntxm/song.h"
-
-void (*onUpdateRow)(u16 row) = 0;
-void (*onStop)(void) = 0;
-void (*onPlaySampleFinished)(void) = 0;
-void (*onPotPosChange)(u16 potpos) = 0;
-
-void RegisterRowCallback(void (*onUpdateRow_)(u16))
-{
-	onUpdateRow = onUpdateRow_;
-}
-
-void RegisterStopCallback(void (*onStop_)(void))
-{
-	onStop = onStop_;
-}
-
-void RegisterPlaySampleFinishedCallback(void (*onPlaySampleFinished_)(void))
-{
-	onPlaySampleFinished = onPlaySampleFinished_;
-}
-
-void RegisterPotPosChangeCallback(void (*onPotPosChange_)(u16))
-{
-	onPotPosChange = onPotPosChange_;
-}
+#include "command.h"
 
 void CommandInit() {
 	memset(commandControl, 0, sizeof(CommandControl));
@@ -104,54 +64,21 @@ void CommandStopSample(int channel)
 	commandControl->currentCommand %= MAX_COMMANDS;
 }
 
-void CommandStartRecording(u16* buffer, int length)
-{
-	Command* command = &commandControl->command[commandControl->currentCommand];
-	command->destination = DST_ARM7;
-	StartRecordingCommand* sr = &command->startRecording;
-
-	command->commandType = START_RECORDING; 
-	sr->buffer = buffer;
-	sr->length = length;
-
-	commandControl->currentCommand++;
-	commandControl->currentCommand %= MAX_COMMANDS;
-}
-
-int CommandStopRecording(void)
-{
-	Command* command = &commandControl->command[commandControl->currentCommand];
-	command->destination = DST_ARM7;
-	command->commandType = STOP_RECORDING;
-	commandControl->return_data = -1;
-	commandControl->currentCommand++;
-	commandControl->currentCommand %= MAX_COMMANDS;
-	while(commandControl->return_data == -1)
-		swiDelay(1);
-	return commandControl->return_data;
-}
-
 void RecvCommandUpdateRow(UpdateRowCommand *c)
 {
-	if(onUpdateRow)
-		onUpdateRow(c->row);
+	
 }
 
-void RecvCommandUpdatePotPos(UpdatePotPosCommand *c)
-{
-	if(onPotPosChange)
-		onPotPosChange(c->potpos);
+void RecvCommandUpdatePotPos(UpdatePotPosCommand *c) {
+	
 }
 
-void RecvCommandNotifyStop(void)
-{
-	if(onStop)
-		onStop();
+void RecvCommandNotifyStop(void) {
+	
 }
 
 void RecvCommandSampleFinish(void) {
-	if(onPlaySampleFinished)
-		onPlaySampleFinished();
+	
 }
 
 void CommandProcessCommands(void)
@@ -164,10 +91,6 @@ void CommandProcessCommands(void)
 		
 			switch(command->commandType)
 			{
-				case DBG_OUT:
-					iprintf("%s", command->dbgOut.msg);
-					break;
-				
 				case UPDATE_ROW:
 					RecvCommandUpdateRow(&command->updateRow);
 					break;
@@ -260,26 +183,6 @@ void CommandStopInst(u8 channel)
 	
 	c->channel = channel;
 	
-	commandControl->currentCommand++;
-	commandControl->currentCommand %= MAX_COMMANDS;	
-}
-
-void CommandMicOn(void)
-{
-	Command* command = &commandControl->command[commandControl->currentCommand];
-	command->destination = DST_ARM7;
-	command->commandType = MIC_ON; 
-
-	commandControl->currentCommand++;
-	commandControl->currentCommand %= MAX_COMMANDS;	
-}
-
-void CommandMicOff(void)
-{
-	Command* command = &commandControl->command[commandControl->currentCommand];
-	command->destination = DST_ARM7;
-	command->commandType = MIC_OFF;
-
 	commandControl->currentCommand++;
 	commandControl->currentCommand %= MAX_COMMANDS;	
 }

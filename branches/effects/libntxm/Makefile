@@ -2,7 +2,7 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)"
 endif
 
 include $(DEVKITARM)/ds_rules
@@ -10,32 +10,21 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	$(shell basename $(CURDIR))
 export TOPDIR		:=	$(CURDIR)
 
-LIBDIRS :=      $(LIBNDS)
 
 #---------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
 #---------------------------------------------------------------------------------
 export PATH		:=	$(DEVKITARM)/bin:$(PATH)
 
-export INCLUDE		:= 	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-				$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-				-I$(CURDIR)/$(BUILD)
-
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-all: arm9/lib/$(TARGET)9.a arm7/lib/$(TARGET)7.a
+all: 
+	make -C arm9
+	make -C arm7
+	@[ -d lib ] || mkdir -p lib
 	@cp arm9/lib/$(TARGET)9.a arm7/lib/$(TARGET)7.a lib
 
-arm9/lib/$(TARGET)9.a:
-	$(MAKE) -C arm9
-
-arm7/lib/$(TARGET)7.a:
-	$(MAKE) -C arm7
-
-install: all 
-	cp lib/*.a $(DEVKITPRO)/libnds/lib
-	cp -R include/ntxm $(DEVKITPRO)/libnds/include
 
 #---------------------------------------------------------------------------------
 clean:

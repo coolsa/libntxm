@@ -1,1 +1,1 @@
-../../include/ntxm/command.h
+../../arm9/source/command.h
