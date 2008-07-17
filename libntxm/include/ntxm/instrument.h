@@ -1,34 +1,20 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
-
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
@@ -36,18 +22,17 @@
 #include "sample.h"
 
 #define MAX_OCTAVE		9
-#define MAX_NOTE		(MAX_OCTAVE*12-1)
+#define MAX_NOTE	(MAX_OCTAVE*12-1)
 
 #define INST_SAMPLE	0
 #define INST_SYNTH	1 // Yes, who knows!
 
 #define MAX_INST_NAME_LENGTH	22
 
-#define MAX_ENV_X				324
-#define MAX_ENV_Y				64
-#define MAX_ENV_POINTS			12
+#define MAX_ENV_X			324
+#define MAX_ENV_Y			64
 
-#define MAX_CHANNELS			16
+struct ChannelState;
 
 class Instrument
 {
@@ -64,8 +49,9 @@ class Instrument
 		Sample *getSample(u8 idx); // If not present, 0 is returned
 		void setSample(u8 idx, Sample *sample);
 		Sample *getSampleForNote(u8 _note);
-		void play(u8 _note, u8 _volume, u8 _channel);
-		void bendNote(u8 _note, u8 _basenote, u8 _finetune, u8 _channel);
+		// void advance(u8 note, long offset, u8 _channel);
+		void play(u8 _note, u8 _volume, struct ChannelState* _channel);
+		// void bendNote(u8 _note, u8 _finetune, ChannelState *_channel);
 		void setNoteSample(u16 note, u8 sample_id);
 		u8 getNoteSample(u16 note);
 		void setVolEnvEnabled(bool is_enabled);
@@ -82,13 +68,8 @@ class Instrument
 		void setVolumeEnvelope(u16 *envelope, u8 n_points, bool vol_env_on_, bool vol_env_sustain_, bool vol_env_loop_);
 		void setPanningEnvelope(u16 *envelope, u8 n_points, bool pan_env_on_, bool pan_env_sustain_, bool pan_env_loop_);
 		
-		void setVolumeEnvelopePoints(u16 *xs, u16 *ys, u16 n_points);
-		
-		u16 getVolumeEnvelope(u16 **xs, u16 **ys);
-		u16 getPanningEnvelope(u16 **xs, u16 **ys);
-		
-		void updateEnvelopePos(u8 bpm, u8 ms_passed, u8 channel);
-		u16 getEnvelopeAmp(u8 channel);
+		void updateEnvelopePos(u8 bpm, u8 ms_passed);
+		u16 getEnvelopeAmp(void);
 		
 	private:
 		
@@ -110,22 +91,22 @@ class Instrument
 	
 		u8 *note_samples;
 		
-		u16 vol_envelope_x[MAX_ENV_POINTS];
-		u16 vol_envelope_y[MAX_ENV_POINTS];
+		u16 vol_envelope_x[12];
+		u16 vol_envelope_y[12];
 		u8 n_vol_points;
 		bool vol_env_on;
 		bool vol_env_sustain;
 		bool vol_env_loop;
 		
-		u16 pan_envelope_x[MAX_ENV_POINTS];
-		u16 pan_envelope_y[MAX_ENV_POINTS];
+		u16 pan_envelope_x[12];
+		u16 pan_envelope_y[12];
 		u8 n_pan_points;
 		bool pan_env_on;
 		bool pan_env_sustain;
 		bool pan_env_loop;
 		
-		u16 envelope_ms[MAX_CHANNELS];
-		u16 envelope_pixels[MAX_CHANNELS]; // Pixel of the FT2 envelope editor :-)
+		u16 envelope_ms;
+		u16 envelope_pixels; // Pixel of the FT2 envelope editor :-)
 };
 
 #endif

@@ -1,49 +1,38 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+#include "ntxm/song.h"
+
+
+#include "tools.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
 #ifdef ARM7
-#include "ntxm/demokit.h"
+#include "demokit.h"
 #endif
 
-#include "ntxm/song.h"
-#include "ntxm/ntxmtools.h"
-#include "ntxm/command.h"
+#include "command.h"
 
 /*
 A word on pattern memory management:
-a pattern is a 3d-array. The dimensions are
+patterns is a 3d-array. The dimensions are
 pattern - channel - row
 The first dimension is completely allocated,
 the second and third dimensions are only
@@ -55,16 +44,35 @@ allocated as far as needed.
 // Everything that changes the song is only possible on arm9.
 // This saves memory on arm7 (there's only 96k) and is safer.
 
+void Song::setoops(int code, int pat, int row, int chan) {
+  if (oops[1]!=-1) return; // there is already an unacknowledged error.
+  // if (oops[0]==code) return; // we gave out that info already.
+  oops[0]=code; oops[1]=pat; oops[2]=row; oops[3]=chan;
+}
+
+
 #ifdef ARM9
 
+int Song::getoops(int* pat, int *row, int* chan) {
+  if (oops[0]==0 || oops[1]==-1) return 0; // nothing to report.
+  if (pat) *pat=oops[1];
+  if (row) *row=oops[2];
+  if (chan)*chan=oops[3];
+  oops[1]=-1; oops[2]=-1;
+  return oops[0];
+}
+
 Song::Song(u8 _speed, u8 _bpm, u8 _channels)
-	:speed(_speed), bpm(_bpm), n_channels(_channels), restart_position(0), n_patterns(0)
+  :speed(_speed), bpm(_bpm), n_channels(_channels), restart_position(0), 
+   patternlengths(0), internal_patternlengths(0), pattern_order_table(0),
+   instruments(0), name(0), n_patterns(0), potsize(0), patterns(0)
 {
+  oops[0]=0; oops[1]=-1; oops[2]=-1; oops[3]=-1;
 	// Init arrays
 	patternlengths = (u16*)malloc(sizeof(u16)*MAX_PATTERNS);
 	internal_patternlengths = (u16*)malloc(sizeof(u16)*MAX_PATTERNS);
 	pattern_order_table = (u8*)malloc(sizeof(u8)*MAX_POT_LENGTH);
-	instruments = (Instrument**)calloc(1, sizeof(Instrument*)*MAX_INSTRUMENTS);
+	instruments = (Instrument**)malloc(sizeof(Instrument*)*MAX_INSTRUMENTS);
 	name = (char*)malloc(MAX_SONG_NAME_LENGTH+1);
 	my_memset(name, 0, MAX_SONG_NAME_LENGTH+1);
 	my_strncpy(name, "unnamed", MAX_SONG_NAME_LENGTH);
@@ -99,11 +107,11 @@ Song::Song(u8 _speed, u8 _bpm, u8 _channels)
 
 Song::~Song()
 {
-	
+  printf("deleting song...\n");
 	killInstruments();
 	
 	killPatterns();
-	
+
 	// Delete arrays
 	free(patternlengths);
 	free(internal_patternlengths);
@@ -138,14 +146,12 @@ u16 Song::getPatternLength(u8 idx)
 
 // How many milliseconds per row
 u32 Song::getMsPerRow(void) {
-	// Formula from Fasttracker II: speed*5*1000/2/bpm
-	return (unsigned long)( ( ( ((unsigned long long)(speed) << 16) * ((unsigned long long)(2500) << 16)) ) / (bpm<<16) );
+	return speed*5*1000/2/bpm; // Formula from Fasttracker II
 }
 
 // How many milliseconds per tick (1 tick = time for 1 row / speed)
 u32 Song::getMsPerTick(void) {
-	// Formula from Fasttracker II: 5*1000/2/bpm
-	return (unsigned long)( (((unsigned long long)(2500)) << 32) / (bpm<<16) );
+	return 5*1000/2/bpm; // Formula from Fasttracker II
 }
 
 Instrument *Song::getInstrument(u8 instidx) {
@@ -222,19 +228,17 @@ void Song::addPattern(u16 length)
 	n_patterns++;
 	
 	patterns[n_patterns-1] = (Cell**)malloc(sizeof(Cell*)*n_channels);
-	
-	u16 i,j;
-	for(i=0;i<n_channels;++i)
-	{
+
+	u8 i,j;
+	for(i=0;i<n_channels;++i) {
 		patterns[n_patterns-1][i] = (Cell*)malloc(sizeof(Cell)*patternlengths[n_patterns-1]);
-		
 		Cell *cell;
-		for(j=0;j<patternlengths[n_patterns-1];++j)
-		{
+		for(j=0;j<patternlengths[n_patterns-1];++j) {
 			cell = &patterns[n_patterns-1][i][j];
 			clearCell(cell);
 		}
 	}
+	
 }
 
 void Song::channelAdd(void) {
@@ -245,15 +249,15 @@ void Song::channelAdd(void) {
 	for(u8 pattern=0;pattern<n_patterns;++pattern) {
 		patterns[pattern] = (Cell**)realloc(patterns[pattern], sizeof(Cell*)*(n_channels+1));
 		patterns[pattern][n_channels] = (Cell*)malloc(sizeof(Cell)*internal_patternlengths[pattern]);
-
+		
 		// Clear
 		Cell *cell;
-		for(u16 j=0;j<internal_patternlengths[pattern];++j) {
+		for(u8 j=0;j<internal_patternlengths[pattern];++j) {
 			cell = &patterns[pattern][n_channels][j];
 			clearCell(cell);
 		}
 	}
-
+	
 	n_channels++;
 	
 }
@@ -332,12 +336,13 @@ u8 Song::getRestartPosition(void) {
 }
 
 u8 Song::getTempo(void) {
-	return speed;
+  return speed;
 }
 
 u8 Song::getBPM(void) {
 	return bpm;
 }
+
 
 void Song::setTempo(u8 _tempo) {
 	speed = _tempo;
@@ -346,9 +351,7 @@ void Song::setTempo(u8 _tempo) {
 void Song::setBpm(u8 _bpm) {
 	bpm = _bpm;
 }
-
 #ifdef ARM9
-
 // Zapping
 void Song::zapPatterns(void) {
 	
@@ -428,18 +431,13 @@ void Song::killPatterns(void) {
 
 void Song::killInstruments(void) {
 	
-	for(u8 i=0;i<MAX_INSTRUMENTS;++i)
-	{
-		if(instruments[i] != NULL)
-		{
+	for(u8 i=0;i<MAX_INSTRUMENTS;++i) {
+		if(instruments[i] != NULL) {
 			delete instruments[i];
 			instruments[i] = NULL;
 		}
 	}
-	
 	free(instruments);
-	instruments = NULL;
-	
 }
 
 #endif

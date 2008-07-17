@@ -1,34 +1,20 @@
-/*
- * libNTXM - XM Player Library for the Nintendo DS
- *
- *    Copyright (C) 2005-2008 Tobias Weyand (0xtob)
- *                         me@nitrotracker.tobw.net
- *
- */
-
-/***** BEGIN LICENSE BLOCK *****
- * 
- * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
- * (the "License"); you may not use this file except in compliance with
- * the License. You should have recieved a copy of the license with this package.
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either of the GNU General Public License Version 3 or later (the "GPL"),
- * in which case the provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only under the terms of
- * either the GPL, and not to allow others to use your version of this file under
- * the terms of the Noncommercial zLib License, indicate your decision by
- * deleting the provisions above and replace them with the notice and other
- * provisions required by the GPL. If you do not delete the provisions above,
- * a recipient may use your version of this file under the terms of any one of
- * the GPL or the Noncommercial zLib License.
- * 
- ***** END LICENSE BLOCK *****/
+// libNTXM - XM Player Library for the Nintendo DS
+// Copyright (C) 2005-2007 Tobias Weyand (0xtob)
+//                         me@nitrotracker.tobw.net
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef SONG_H
 #define SONG_H
@@ -44,39 +30,42 @@
 #define MAX_CHANNELS			16 // XM has 32, but 16 is DS hardware limited unless software mixing were implemented. Yeah, perhaps.
 #define MAX_PATTERN_LENGTH		256
 #define DEFAULT_PATTERN_LENGTH	64
-#define DEFAULT_BPM				125
+#define DEFAULT_BPM			125
 #define DEFAULT_SPEED			6
 #define DEFAULT_CHANNELS		4
 
-#define EMPTY_NOTE				255
+#define EMPTY_NOTE			255
 #define STOP_NOTE				254
 
 #define NO_INSTRUMENT			255
-#define MAX_SONG_NAME_LENGTH	20
+#define MAX_SONG_NAME_LENGTH		20
 
 #define NO_VOLUME				255
-#define MAX_VOLUME				127
+#define MAX_VOLUME			127
 
 #define NO_EFFECT				255
 #define NO_EFFECT_PARAM			0
 
 #define EFFECT_ARPEGGIO			0x0
 #define EFFECT_PORTA_UP			0x1
+#define EFFECT_PORTA_DN                 0x2
+#define EFFECT_PORTA_NOTE               0x3
+#define EFFECT_VIBRATO                  0x4
 #define EFFECT_VOLUME_SLIDE		0xA
 #define EFFECT_SET_VOLUME		0xC
-#define EFFECT_PATTERN_BREAK	0xD
+#define EFFECT_PATTERN_BREAK		0xD
 #define EFFECT_E				0xE
+#define EFFECT_F_TEMPO_SPEED 0x0F
+#define EFFECT_9_OFFSET 0x9
 
-#define EFFECT_E_FINE_PORTA_UP			0x1
-#define EFFECT_E_FINE_PORTA_DOWN		0x2
-#define EFFECT_E_SET_GLISS_CONTROL		0x3
+#define EFFECT_E_FINE_PORTA_UP	0x1
+#define EFFECT_E_FINE_PORTA_DOWN	0x2
+#define EFFECT_E_SET_GLISS_CONTROL	0x3
 #define EFFECT_E_SET_VIBRATO_CONTROL	0x4
-#define EFFECT_E_SET_FINETUNE			0x5
-#define EFFECT_E_SET_LOOP				0x6
+#define EFFECT_E_SET_FINETUNE		0x5
+#define EFFECT_E_SET_LOOP		0x6
 
-#define EFFECT_E_NOTE_CUT				0x0C
-
-#define EFFECT_SET_SPEED_TEMPO			0x0F
+#define EFFECT_E_NOTE_CUT		0x0C
 /*
   0      Appregio
   1  (*) Porta up
@@ -146,9 +135,24 @@ is a subset of XM, but export and import for mod, it, s3m could come. To edit a
 pattern, get its pointer with getPattern().
 */
 
+enum Oops {
+  OOPS_ALLRIGHT,    // no error
+  OOPS_WARNING=0x1000,
+  OOPS_EFF_WO_SMP,  // effect found, no sample.
+  OOPS_INST_WO_SMP, // instrument, but no sample.
+  OOPS_EFF_WO_INST, // effect found, no instrument.
+  OOPS_SLIDE_CHANGE_INST, // issue a S3M:Gxx command while changing instrument.
+  OOPS_NOTE_MUTED,
+
+  OOPS_EXPERIMENTS=0x8000,
+  OOPS_XP_PORTA_UP,    // (experimental) portamento up 
+  OOPS_XP_PORTA_DN,
+  OOPS_XP_PORTA_NOTE_SETUP,
+};
+
 class Song {
 	friend class Player;
-	
+	int oops[4]; //! for 7->9 error reporting
 	public:
 		
 		Song(u8 _speed=DEFAULT_SPEED, u8 _bpm=DEFAULT_BPM, u8 _channels=DEFAULT_CHANNELS);
@@ -157,16 +161,14 @@ class Song {
 		
 		void setExternalTimerHandler(void (*_externalTimerHandler)(void));
 		
+		void setoops(int code, int pat, int row, int chan);
+		int getoops(int *pat, int *row, int *chan);
+
 		Cell **getPattern(u8 idx);
 		u8 getChannels(void);
 		u16 getPatternLength(u8 idx);
-		
-		// Get milliseconds per row. Returns a 16.16 fixed point value
 		u32 getMsPerRow(void);
-		
-		// Get milliseconds per tick. Returns a 16.16 fixed point value
 		u32 getMsPerTick(void);
-		
 		Instrument *getInstrument(u8 instidx);
 		u8 getInstruments(void);
 		
