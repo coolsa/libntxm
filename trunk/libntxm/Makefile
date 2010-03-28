@@ -21,6 +21,8 @@ export INCLUDE		:= 	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 				$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 				-I$(CURDIR)/$(BUILD)
 
+.PHONY: arm9/lib/$(TARGET)9.a arm7/lib/$(TARGET)7.a
+
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
