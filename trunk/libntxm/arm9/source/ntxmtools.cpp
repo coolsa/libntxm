@@ -134,15 +134,6 @@ bool my_file_exists(const char *filename)
 
 #endif
 
-s32 my_clamp(s32 val, s32 min, s32 max)
-{
-	if(val < min)
-		return min;
-	if(val > max)
-		return max;
-	return val;
-}
-
 // Borrowed from Infantile Paralyser
 bool my_testmalloc(int size)
 {
@@ -175,6 +166,7 @@ bool my_testmalloc(int size)
 
 #define PrintFreeMem_Seg (10240)
 
+// Get the size of the biggest allocatable memory chunk
 // Borrowed from Infantile Paralyser
 //TODO: This is NOT a clean way to get the free memory! Fix it!
 u32 my_get_free_mem(void)
