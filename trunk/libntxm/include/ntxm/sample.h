@@ -103,6 +103,8 @@ class Sample
 		void reverse(u32 startsample, u32 endsample);
 		void normalize(u16 percent, u32 startsample, u32 endsample);
 
+		// Draws a line into the sample
+		void drawLine(int x1, int y1, int x2, int y2);
 		//void cutSilence(void); // Heuristically cut silence in the beginning
 
 	private:

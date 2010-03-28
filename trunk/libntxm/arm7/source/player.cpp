@@ -175,6 +175,14 @@ void Player::playNote(u8 note, u8 volume, u8 channel, u8 instidx)
 		state.channel_volume[channel] = volume * inst->getSampleForNote(note)->getVolume() / 255;
 	}
 
+    if(inst->getSampleForNote(note)->getLoop() != 0) {
+	    state.channel_loop[channel] = true;
+		state.channel_ms_left[channel] = 0;
+    } else {
+		state.channel_loop[channel] = false;
+		state.channel_ms_left[channel] = inst->calcPlayLength(note);
+	}
+
 	state.channel_fade_vol[channel] = state.channel_volume[channel];
 
 	state.channel_note[channel]   = note;
