@@ -433,7 +433,7 @@ u16 XMTransport::load(const char *filename, Song **_song)
 		if(instrument == 0)
 		{
 			fclose(xmfile);
-			iprintf("memfull\n");
+			iprintf("memfull on line %d\n", __LINE__);
 			return XM_TRANSPORT_ERROR_MEMFULL;
 		}
 		song->setInstrument(inst, instrument);
@@ -573,7 +573,7 @@ u16 XMTransport::load(const char *filename, Song **_song)
 					if(sample_data==NULL)
 					{
 						fclose(xmfile);
-						iprintf("memfull\n");
+						iprintf("memfull on line %d\n", __LINE__);
 						return XM_TRANSPORT_ERROR_MEMFULL;
 					}
 					
