@@ -99,7 +99,7 @@ inline u32 linear_freq_table_lookup(u32 note)
 Sample::Sample(void *_sound_data, u32 _n_samples, u16 _sampling_frequency, bool _is_16_bit,
 	u8 _loop, u8 _volume)
 	:original_data(0), pingpong_data(0), n_samples(_n_samples), is_16_bit(_is_16_bit), loop(_loop),
-	loop_start(0), loop_length(0), volume(_volume), panning(64)
+	loop_start(0), loop_length(0), volume(_volume), panning(128)
 {
 	sound_data = _sound_data;
 
@@ -113,7 +113,7 @@ Sample::Sample(void *_sound_data, u32 _n_samples, u16 _sampling_frequency, bool 
 }
 
 Sample::Sample(const char *filename, u8 _loop, bool *_success)
-	:original_data(0), pingpong_data(0), loop(_loop), loop_start(0), loop_length(0), volume(255), panning(64)
+	:original_data(0), pingpong_data(0), loop(_loop), loop_start(0), loop_length(0), volume(255), panning(128)
 {
 	sound_data = (void**)calloc(20*sizeof(void*), 1);
 
@@ -684,6 +684,71 @@ void Sample::normalize(u16 percent, u32 startsample, u32 endsample)
 
 	if( loop == PING_PONG_LOOP )
 		updatePingPongLoop();
+}
+
+void Sample::drawLine(int x1, int y1, int x2, int y2)
+{
+	x1 = my_clamp(x1, 0, n_samples-1);
+	x2 = my_clamp(x2, 0, n_samples-1);
+	int minval = is_16_bit?-32768:-128;
+	int maxval = is_16_bit?32767:127;
+	y1 = my_clamp(y1, minval, maxval);
+	y2 = my_clamp(y2, minval, maxval);
+
+	void *data = getData();
+	s16 *sounddata16 = (s16*)(data);
+	s8 *sounddata8 = (s8*)(data);
+
+	// Guarantees that all lines go from left to right
+	if ( x2 < x1 ) {
+		int tmp = x2; x2 = x1; x1 = tmp;
+		tmp = y2; y2 = y1; y1 = tmp;
+	}
+	s32 dy = y2 - y1, dx = x2 - x1;
+	// If the gradient is greater than one we have to flip the axes
+	if ( abs(dy) < dx )	{
+		s32 add = 1;
+		int xp = x1, yp = y1;
+		if(dy < 0) {
+			dy = -dy;
+			add =- 1;
+		}
+		s32 d = 2*dy - dx;
+		for(; xp<=x2; xp++)	{
+			if(d > 0) {
+				yp += add;
+				d -= 2 * dx;
+			}
+			if(is_16_bit) sounddata16[xp] = yp; else sounddata8[xp] = yp;
+			d += 2 * dy;
+		}
+	} else {
+		int tmp = x1; x1 = y1; y1 = tmp;
+		tmp = x2; x2 = y2; y2 = tmp;
+		if ( x2 < x1 ) {
+			tmp = x2; x2 = x1; x1 = tmp;
+			tmp = y2; y2 = y1; y1 = tmp;
+		}
+		dy = y2 - y1; dx = x2 - x1;
+		s32 add = 1;
+		if(dy < 0) {
+			dy = -dy;
+			add=-1;
+		}
+		int xp = x1, yp = y1;
+		s32 d = 2 * dy - dx;
+		for(xp=x1; xp<=x2; xp++) {
+			if(d > 0) {
+				yp += add;
+				d -= 2 * dx;
+			}
+			if(is_16_bit) sounddata16[yp] = xp; else sounddata8[yp] = xp;
+			d += 2 * dy;
+		}
+	}
+
+	if( loop == PING_PONG_LOOP )
+			updatePingPongLoop();
 }
 
 #endif
