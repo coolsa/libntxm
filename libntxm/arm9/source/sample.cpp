@@ -485,21 +485,18 @@ void Sample::delPart(u32 startsample, u32 endsample)
 		return;
 	}
 	
-	// TODO: Make sure there is enough RAM for this!
-	
-	u32 new_n_samples = n_samples - (endsample - startsample);
+	u32 new_n_samples = n_samples - (endsample - startsample + 1);
 	
 	u8 bps;
 	if(is_16_bit) bps=2; else bps=1;
 	
-	s8 *new_sounddata = (s8*)malloc(bps * new_n_samples);
-	// Copy the data before the deleted part
-	memcpy(new_sounddata, sound_data, startsample*bps);
 	// Copy the data after the deleted part
-	memcpy(new_sounddata+startsample*bps, ((s8*)sound_data)+(endsample+1)*bps, n_samples*bps - endsample*bps);
+	if(endsample < n_samples - 1)
+	{
+		memmove((u8*)sound_data + startsample * bps, (u8*)sound_data + (endsample + 1) * bps, ((n_samples - 1) - endsample) * bps);
+	}
+	sound_data = realloc(sound_data, new_n_samples * bps);
 	
-	free(sound_data);
-	sound_data = new_sounddata;
 	n_samples = new_n_samples;
 	
 	// Now everything's clear and we set the variables right
@@ -509,7 +506,7 @@ void Sample::delPart(u32 startsample, u32 endsample)
 	u32 loop_end = loop_start + loop_length;
 	u32 start = startsample * bps;
 	u32 end = endsample * bps;
-	u32 del = end - start;
+	u32 del = end - start + 1;
 	
 	if(loop != NO_LOOP)
 	{
