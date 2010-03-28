@@ -586,11 +586,20 @@ void Sample::reverse(u32 startsample, u32 endsample)
 	if(endsample >= nsamples)
 		endsample = nsamples-1;
 	
-	// TODO: Make sure there is enough RAM for this!
-	
 	s32 offset = startsample;
 	s32 length = endsample - startsample;
 	
+	// Make sure there is enough RAM for this
+	void *testmem = malloc( (is_16_bit?2:1) * length);
+	if(testmem == NULL)
+	{
+		iprintf("Not enough memory for reversing\n");
+		return;
+	}
+	else
+		free(testmem);
+	
+	// Do it!
 	if(is_16_bit == true)
 	{
 		s16 *new_sounddata = (s16*)malloc(2 * length);
@@ -634,7 +643,7 @@ void Sample::reverse(u32 startsample, u32 endsample)
 }
 
 
-void Sample::normalize(u8 percent)
+void Sample::normalize(u16 percent)
 {
 	void *data = getData();
 	u32 nsamples = getNSamples();
@@ -645,11 +654,10 @@ void Sample::normalize(u8 percent)
 		s32 smp;
 		
 		for(u32 i=0;i<nsamples;++i) {
-			smp = percent * sounddata[i] / 100;
-			if(smp>32767)
-				smp=32767;
-			else if (smp<-32768)
-				smp=32768;
+			smp = (s32)percent * (s32)sounddata[i] / 100;
+			
+			smp = my_clamp(smp, -32768, 32767);
+			
 			sounddata[i] = smp;
 		}
 		
@@ -659,11 +667,10 @@ void Sample::normalize(u8 percent)
 		s16 smp;
 		
 		for(u32 i=0;i<nsamples;++i) {
-			smp = percent * sounddata[i] / 100;
-			if(smp>127)
-				smp=127;
-			else if(smp<-128)
-				smp=-128;
+			smp = (s32)percent * (s32)sounddata[i] / 100;
+			
+			smp = my_clamp(smp, -128, 127);
+			
 			sounddata[i] = smp;
 		}
 	}
@@ -801,56 +808,36 @@ void Sample::fade(u32 startsample, u32 endsample, bool in)
 	if(endsample >= nsamples)
 		endsample = nsamples-1;
 	
-	// TODO: Make sure there is enough RAM for this!
-	
 	s32 offset = startsample;
 	s32 length = endsample - startsample + 1;
 	
 	if(is_16_bit == true)
 	{
-		s16 *new_sounddata = (s16*)malloc(2 * length);
 		s16 *sounddata = (s16*)(data);
 		
-		// First create a buffer with the faded sound data
 		if(in==true) {
 			for(s32 i=0;i<length;++i) {
-				new_sounddata[i] = (((i * 1024) / length) * sounddata[offset+i]) / 1024;
+				sounddata[offset+i] = (((i * 1024) / length) * sounddata[offset+i]) / 1024;
 			}
 		} else {
 			for(s32 i=0;i<length;++i) {
-				new_sounddata[i] = ((((length-i) * 1024) / length) * sounddata[offset+i]) / 1024;
+				sounddata[offset+i] = ((((length-i) * 1024) / length) * sounddata[offset+i]) / 1024;
 			}
-		}
-		
-		// Then copy it into the sample
-		for(s32 i=0;i<length;++i) {
-			sounddata[offset+i] = new_sounddata[i];
-		}
-		
-		free(new_sounddata);
-		
-	} else {
-		
-		s8 *new_sounddata = (s8*)malloc(length);
+		}	
+	} 
+	else
+	{
 		s8 *sounddata = (s8*)(data);
 		
-		// First create a buffer with the faded sound data
 		if(in==true) {
 			for(s32 i=0;i<length;++i) {
-				new_sounddata[i] = i * sounddata[offset+i] / length;
+				sounddata[offset+i] = i * sounddata[offset+i] / length;
 			}
 		} else {
 			for(s32 i=0;i<length;++i) {
-				new_sounddata[i] = (length-i) * sounddata[offset+i] / length;
+				sounddata[offset+i] = (length-i) * sounddata[offset+i] / length;
 			}
 		}
-		
-		// Then copy it into the sample
-		for(s32 i=0;i<length;++i) {
-			sounddata[offset+i] = new_sounddata[i];
-		}
-		
-		free(new_sounddata);
 	}
 	
 	// Now everything's clear and we set the variables right
