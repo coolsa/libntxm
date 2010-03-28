@@ -406,7 +406,7 @@ void Sample::setLoopLength(u32 _loop_length)
 		loop_start_in_samples = loop_start;
 	
 	loop_start_in_samples = my_clamp(loop_start_in_samples, 0, n_samples-1);
-	u32 ll = my_clamp(_loop_length, 0, n_samples-1 - loop_start_in_samples);
+	u32 ll = my_clamp(_loop_length, 0, n_samples - loop_start_in_samples);
 	
 	setLoopStartAndLength(loop_start_in_samples, ll);
 }
