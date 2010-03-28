@@ -98,7 +98,7 @@ class Sample
 		void fadeIn(u32 startsample, u32 endsample);
 		void fadeOut(u32 startsample, u32 endsample);
 		void reverse(u32 startsample, u32 endsample);
-		void normalize(u16 percent);
+		void normalize(u16 percent, u32 startsample, u32 endsample);
 		
 		//void cutSilence(void); // Heuristically cut silence in the beginning
 		

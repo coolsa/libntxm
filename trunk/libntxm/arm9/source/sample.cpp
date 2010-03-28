@@ -643,17 +643,16 @@ void Sample::reverse(u32 startsample, u32 endsample)
 }
 
 
-void Sample::normalize(u16 percent)
+void Sample::normalize(u16 percent, u32 startsample, u32 endsample)
 {
 	void *data = getData();
-	u32 nsamples = getNSamples();
 	
 	if(is_16_bit == true)
 	{
 		s16 *sounddata = (s16*)(data);
 		s32 smp;
 		
-		for(u32 i=0;i<nsamples;++i) {
+		for(u32 i=startsample;i<endsample;++i) {
 			smp = (s32)percent * (s32)sounddata[i] / 100;
 			
 			smp = my_clamp(smp, -32768, 32767);
@@ -666,7 +665,7 @@ void Sample::normalize(u16 percent)
 		s8 *sounddata = (s8*)(data);
 		s16 smp;
 		
-		for(u32 i=0;i<nsamples;++i) {
+		for(u32 i=startsample;i<endsample;++i) {
 			smp = (s32)percent * (s32)sounddata[i] / 100;
 			
 			smp = my_clamp(smp, -128, 127);
