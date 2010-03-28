@@ -168,6 +168,7 @@ u8 Song::getInstruments(void)
 
 void Song::setInstrument(u8 idx, Instrument *instrument) {
 	instruments[idx] = instrument;
+	DC_FlushAll();
 }
 
 // POT functions
@@ -175,6 +176,7 @@ void Song::potAdd(u8 ptn)
 {
 	pattern_order_table[potsize] = ptn;
 	potsize++;
+	DC_FlushAll();
 }
 
 void Song::potDel(u8 element)
@@ -184,7 +186,8 @@ void Song::potDel(u8 element)
 	}
 	if(potsize > 1) {
 		potsize--;
-	}	
+	}
+	DC_FlushAll();
 }
 
 void Song::potIns(u8 idx, u8 pattern)
@@ -196,6 +199,7 @@ void Song::potIns(u8 idx, u8 pattern)
 		pattern_order_table[idx] = pattern;
 		potsize++;
 	}
+	DC_FlushAll();
 }
 
 #endif
@@ -212,6 +216,7 @@ u8 Song::getPotEntry(u8 idx) {
 
 void Song::setPotEntry(u8 idx, u8 value) {
 	pattern_order_table[idx] = value;
+	DC_FlushAll();
 }
 
 void Song::addPattern(u16 length)
@@ -235,6 +240,7 @@ void Song::addPattern(u16 length)
 			clearCell(cell);
 		}
 	}
+	DC_FlushAll();
 }
 
 void Song::channelAdd(void) {
@@ -256,6 +262,7 @@ void Song::channelAdd(void) {
 
 	n_channels++;
 	
+	DC_FlushAll();
 }
 
 void Song::channelDel(void) {
@@ -270,6 +277,7 @@ void Song::channelDel(void) {
 	
 	n_channels--;
 	
+	DC_FlushAll();
 }
 
 #endif
@@ -306,6 +314,8 @@ void Song::resizePattern(u8 ptn, u16 newlength)
 		patternlengths[ptn] = newlength;
 		internal_patternlengths[ptn] = newlength;
 	}
+	
+	DC_FlushAll();
 }
 
 // The most important function
@@ -323,6 +333,7 @@ const char *Song::getName(void) {
 
 void Song::setRestartPosition(u8 _restart_position) {
 	restart_position = _restart_position;
+	DC_FlushAll();
 }
 
 #endif
@@ -341,10 +352,16 @@ u8 Song::getBPM(void) {
 
 void Song::setTempo(u8 _tempo) {
 	speed = _tempo;
+#ifdef ARM9
+	DC_FlushAll();
+#endif
 }
 
 void Song::setBpm(u8 _bpm) {
 	bpm = _bpm;
+#ifdef ARM9
+	DC_FlushAll();
+#endif
 }
 
 #ifdef ARM9
@@ -366,6 +383,7 @@ void Song::zapPatterns(void) {
 	addPattern();
 	
 	restart_position = 0;
+	DC_FlushAll();
 }
 
 void Song::zapInstruments(void)
@@ -377,6 +395,7 @@ void Song::zapInstruments(void)
 		instruments[i] = NULL;
 	}
 	
+	DC_FlushAll();
 }
 
 void Song::clearCell(Cell *cell)
@@ -396,6 +415,7 @@ void Song::setChannelMute(u8 chn, bool muted)
 		return;
 	
 	channels_muted[chn] = muted;
+	DC_FlushAll();
 }
 
 #endif
@@ -439,7 +459,6 @@ void Song::killInstruments(void) {
 	
 	free(instruments);
 	instruments = NULL;
-	
 }
 
 #endif
