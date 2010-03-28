@@ -7,10 +7,10 @@
  */
 
 /***** BEGIN LICENSE BLOCK *****
- * 
+ *
  * Version: Noncommercial zLib License / GPL 3.0
- * 
- * The contents of this file are subject to the Noncommercial zLib License 
+ *
+ * The contents of this file are subject to the Noncommercial zLib License
  * (the "License"); you may not use this file except in compliance with
  * the License. You should have recieved a copy of the license with this package.
  *
@@ -27,7 +27,7 @@
  * provisions required by the GPL. If you do not delete the provisions above,
  * a recipient may use your version of this file under the terms of any one of
  * the GPL or the Noncommercial zLib License.
- * 
+ *
  ***** END LICENSE BLOCK *****/
 
 #include <stdlib.h>
@@ -36,16 +36,16 @@
 #include "ntxm/command.h"
 
 void* NTXM7::operator new (size_t size) {
- 
+
 	return malloc(size);
- 
+
 } // default ctor implicitly called here
 
 void NTXM7::operator delete (void *p) {
- 
+
 	if ( NULL != p )
 		free(p);
- 
+
 } // default dtor implicitly called here
 
 NTXM7::NTXM7(void (*_playTimerHandler)(void))
