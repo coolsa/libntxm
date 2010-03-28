@@ -33,7 +33,7 @@
 #include <stdlib.h>
 
 #include "ntxm/ntxm7.h"
-#include "ntxm/command.h"
+#include "ntxm/fifocommand.h"
 
 void* NTXM7::operator new (size_t size) {
 
@@ -51,17 +51,13 @@ void NTXM7::operator delete (void *p) {
 NTXM7::NTXM7(void (*_playTimerHandler)(void))
 	:player(0)
 {
+    CommandInit();
 	player = new Player(_playTimerHandler);
 }
 
 NTXM7::~NTXM7(void)
 {
 	delete player;
-}
-
-void NTXM7::updateCommands(void)
-{
-	CommandProcessCommands();
 }
 
 void NTXM7::timerHandler(void)

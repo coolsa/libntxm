@@ -39,7 +39,7 @@
 
 #include "ntxm/instrument.h"
 #include "ntxm/ntxmtools.h"
-#include "ntxm/command.h"
+#include "ntxm/fifocommand.h"
 
 #ifdef ARM9
 

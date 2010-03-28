@@ -36,7 +36,7 @@
 #include <math.h>
 
 #include "ntxm/sample.h"
-#include "ntxm/command.h"
+#include "ntxm/fifocommand.h"
 
 #ifdef ARM9
 #include "ntxm/ntxmtools.h"

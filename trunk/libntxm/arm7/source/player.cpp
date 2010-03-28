@@ -36,7 +36,7 @@ extern "C" {
   #include "ntxm/demokit.h"
 }
 #include "ntxm/ntxmtools.h"
-#include "ntxm/command.h"
+#include "ntxm/fifocommand.h"
 #include "ntxm/song.h"
 #include "ntxm/player.h"
 

@@ -39,7 +39,7 @@
 
 #include "ntxm/song.h"
 #include "ntxm/ntxmtools.h"
-#include "ntxm/command.h"
+#include "ntxm/fifocommand.h"
 
 /*
 A word on pattern memory management:
