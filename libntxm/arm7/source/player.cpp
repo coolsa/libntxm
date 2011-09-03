@@ -49,9 +49,10 @@ extern bool ntxm_recording;
 /* ===================== PUBLIC ===================== */
 
 Player::Player(void (*_externalTimerHandler)(void))
-	:externalTimerHandler(_externalTimerHandler)
+	:song(0), externalTimerHandler(_externalTimerHandler)
 {
 	initState();
+
 	initEffState();
 
 	demoInit();
@@ -175,10 +176,10 @@ void Player::playNote(u8 note, u8 volume, u8 channel, u8 instidx)
 		state.channel_volume[channel] = volume * inst->getSampleForNote(note)->getVolume() / 255;
 	}
 
-    if(inst->getSampleForNote(note)->getLoop() != 0) {
-	    state.channel_loop[channel] = true;
+	if(inst->getSampleForNote(note)->getLoop() != 0) {
+		state.channel_loop[channel] = true;
 		state.channel_ms_left[channel] = 0;
-    } else {
+	} else {
 		state.channel_loop[channel] = false;
 		state.channel_ms_left[channel] = inst->calcPlayLength(note);
 	}
@@ -262,6 +263,10 @@ void Player::playTimerHandler(void)
 		{
 			state.single_sample_ms_remaining -= passed_time;
 		}
+	}
+
+	if(song == 0) {
+		return;
 	}
 
 	// Update tick ms
