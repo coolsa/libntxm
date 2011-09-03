@@ -36,6 +36,7 @@
 #include "song.h"
 
 #include <new>
+#include <stdlib.h>
 
 #define FADE_OUT_MS	10 // Milliseconds that a click-preventing fadeout takes
 
