@@ -120,8 +120,12 @@ u16 XMTransport::load(const char *filename, Song **_song)
 	char songname[21] = {0};
 	fread(songname, 1, 20, xmfile);
 
-	// Skip uninteresting stuff like tracker name and version
-	fseek(xmfile, 23, SEEK_CUR);
+	// Skip uninteresting stuff like tracker name
+	fseek(xmfile, 21, SEEK_CUR);
+
+	u16 header_version;
+	fread(&header_version, 2, 1, xmfile);
+	iprintf("XM version %x\n", header_version);
 
 	// Header size
 	u32 header_size;
@@ -214,10 +218,17 @@ u16 XMTransport::load(const char *filename, Song **_song)
 
 		// Number of rows
 		u16 n_rows;
-		fread(&n_rows, 2, 1, xmfile);
+		if( (header_version == 0x104) || (header_version == 0x103) ) {
+			fread(&n_rows, 2, 1, xmfile);
+		} else {
+			u8 u8_n_rows;
+			fread(&u8_n_rows, 1, 1, xmfile);
+			n_rows = (u16)u8_n_rows + 1;
+		}
 
 		if(n_rows > MAX_PATTERN_LENGTH)
 		{
+			iprintf("Pattern too long: %u rows\n", n_rows);
 			fclose(xmfile);
 			return XM_TRANSPORT_PATTERN_TOO_LONG;
 		}
