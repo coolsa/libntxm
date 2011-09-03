@@ -49,9 +49,8 @@ void NTXM7::operator delete (void *p) {
 } // default dtor implicitly called here
 
 NTXM7::NTXM7(void (*_playTimerHandler)(void))
-	:player(0)
 {
-    CommandInit();
+	CommandInit();
 	player = new Player(_playTimerHandler);
 }
 
