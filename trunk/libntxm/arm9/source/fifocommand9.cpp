@@ -63,7 +63,7 @@ void CommandRecvHandler(int bytes, void *user_data) {
 
     switch(msg.commandType) {
         case DBG_OUT: // TODO it's not safe to do this in an interrupt handler
-            iprintf("%s", msg.dbgOut.msg);
+            iprintf(msg.dbgOut.msg);
             break;
 
         case UPDATE_ROW:
@@ -135,6 +135,8 @@ int CommandStopRecording(void)
 {
     NTXMFifoMessage command;
     command.commandType = STOP_RECORDING;
+
+    fifoSendDatamsg(FIFO_NTXM, sizeof(command), (u8*)&command);
 
     while(!fifoCheckValue32(FIFO_NTXM))
         swiDelay(1);
