@@ -174,7 +174,7 @@ u32 my_get_free_mem(void)
 	s32 i;
 	u32 FreeMemSize=0;
 	
-	for(i=1*PrintFreeMem_Seg;i<4096*1024;i+=PrintFreeMem_Seg){
+	for(i=1*PrintFreeMem_Seg;i<16384*1024;i+=PrintFreeMem_Seg){
 		if(my_testmalloc(i)==false) break;
 		FreeMemSize=i;
 	}
